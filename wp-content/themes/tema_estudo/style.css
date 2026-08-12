@@ -1,0 +1,19 @@
+/*
+Theme Name: Tema estudo
+Theme URI: https://luizbrogliatto.freedev.app/
+Author: Luiz Fernando
+Author URI: https://github.com/luiz0067yahoo/
+Description: Tema Estudo WordPress desenvolvido do zero.
+Version: 1.0
+Requires at least: 7.0
+Requires PHP: 8.0
+License: CopyRight Luiz Fernando
+Text Domain: meu-tema
+*/
+html, body{
+    width:100%;
+    height:100%;
+	margin: 0 0 0 0;
+    padding: 0 0 0 0;    
+}
+
