@@ -1,7 +1,7 @@
 <?php
-define("JWT_SECRET_KEY", 'your_key');
-define("JWT_SECRET_KEY_2", 'your_key');
-define("JWT_TIME", 600);//10min
+define("JWT_SECRET_KEY", 'Q9wE3rT7yU2iO8pA5sD1fG6hJ4kL0zX');
+define("JWT_SECRET_KEY_2", 'A7kM2pX9vC4nL8zQ1wS6dF3gH5jT0rY');
+define("JWT_TIME", (10*60);//10min
 
 //define("PIX_KEY", "YOUR_PIX_KEY");//chaves do pix
 //define("PIX_NAME", "YOUR_PIX_NAME");//Nome do recebedor

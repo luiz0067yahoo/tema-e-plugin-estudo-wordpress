@@ -1,0 +1,8 @@
+{
+    "require": {
+        "firebase/php-jwt": "^6.10",
+        "mpdf/qrcode": "^1.2",
+        "nesbot/carbon": "^2.72",
+        "mercadopago/dx-php": "3.0.2"
+    }
+}
