@@ -35,8 +35,8 @@ add_action('init', function () {
     header("Access-Control-Allow-Headers: *");// Permite que qualquer cabeçalho seja enviado na requisição
 });
 
-//require_once(plugin_dir_path(__FILE__) . '.env.php');//variável de ambiente do plugin
+require_once(plugin_dir_path(__FILE__) . 'env.php');//variável de ambiente do plugin
 //require_once(plugin_dir_path(__FILE__) . 'includes/config.php');//configurações do plugin
-//require_once(plugin_dir_path(__FILE__) . 'includes/db/_migrate.php');//migrar banco de dados do plugin
+//require_once(plugin_dir_path(__FILE__) . 'includes/db/_migrate.php');//altera a estrutura do banco de dados do plugin
 //require_once(plugin_dir_path(__FILE__) . 'includes/controllers/_register_rest_route.php');//registrar rotas do plugin
 $wpdb->flush();
