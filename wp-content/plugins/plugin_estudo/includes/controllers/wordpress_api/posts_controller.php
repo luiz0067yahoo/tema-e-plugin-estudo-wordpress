@@ -1,7 +1,7 @@
 <?php
     require_once(plugin_dir_path(PLUGIN_FILE_URL) . "/vendor/autoload.php");
     require_once(plugin_dir_path(PLUGIN_FILE_URL) . "includes/services/posts_service.php");
-    require_once(plugin_dir_path(PLUGIN_FILE_URL) . 'includes/models/wp_posts_model.php');
+    require_once(plugin_dir_path(PLUGIN_FILE_URL) . 'includes/models/wp_posts_data_model.php');
     use Firebase\JWT\JWT;
 
     class PostsController extends WP_REST_Controller {
@@ -9,12 +9,12 @@
         protected $model;
 
         public function __construct() {
-            $this->model = new WPPostsModel();
+            $this->model = new WPPostsDataModel();
             $this->service = new PostsService($this->model);
         }
 
         public function record_routes() {
-            $namespace = 'os/v1';
+            $namespace = 'api/v1';
             $base = 'posts';
             
             register_rest_route($namespace, '/' . $base, array(

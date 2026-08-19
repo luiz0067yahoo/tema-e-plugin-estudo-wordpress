@@ -13,7 +13,7 @@
         }
 
         public function record_routes() {
-            $namespace='os/v1';
+            $namespace='api/v1';
             $base='products';
             register_rest_route($namespace, '/' . $base, array(
                 array(
