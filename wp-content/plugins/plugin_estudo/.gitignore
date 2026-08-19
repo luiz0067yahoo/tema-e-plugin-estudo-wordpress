@@ -1,4 +1,3 @@
-vendor
 .env.php
 phpunit.phar
 phpunit.phar.asc
