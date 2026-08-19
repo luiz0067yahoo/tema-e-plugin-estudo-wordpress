@@ -10,7 +10,7 @@ class WPCategoriesModel {
             $uncategorized_id = $uncategorized->term_id;
             $offset = ($page - 1) * $per_page; // Correção: Definir o offset corretamente
             $args = array(
-                'taxonomy' => 'product_cat',
+                //'taxonomy' => 'product_cat',
                 'hide_empty' => false,
                 'exclude' => $uncategorized_id, 
                 'number' => $per_page,
@@ -25,7 +25,7 @@ class WPCategoriesModel {
                 $args['slug'] = $params_data['slug'];
                 $args_count['slug'] = $params_data['slug'];
             }
-            $categories_count = count(get_terms($args_count));
+            $categories_count = 0;
             $categories = get_terms($args);
             
             $categorie_list = array();
@@ -40,6 +40,7 @@ class WPCategoriesModel {
                 );
                 $categorie_list[] = $categorie_data;
             }
+            $categories_count=count($categorie_list);
             $result = ["data"=>$categorie_list,"total"=>$categories_count];
         } catch (Exception $erro) {
         }
