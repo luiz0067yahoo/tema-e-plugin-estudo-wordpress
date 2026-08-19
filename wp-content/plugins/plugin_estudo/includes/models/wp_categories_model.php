@@ -6,24 +6,20 @@ class WPCategoriesModel {
     public function read($params_data,$page=1,$per_page=10,$orders= array()) {
         $result=null;
         try {
-            $uncategorized = get_term_by('name', 'Sem categoria', 'product_cat');
+            $uncategorized = get_term_by('name', 'Sem categoria', 'category');
             $uncategorized_id = $uncategorized->term_id;
             $offset = ($page - 1) * $per_page; // Correção: Definir o offset corretamente
             $args = array(
                 //'taxonomy' => 'product_cat',
+                'taxonomy' => 'category',
                 'hide_empty' => false,
                 'exclude' => $uncategorized_id, 
                 'number' => $per_page,
                 'offset' => $offset,
             );
-            $args_count = array(
-                'taxonomy' => 'product_cat',
-                'hide_empty' => false, 
-                'exclude' => $uncategorized_id,
-            );
+            
             if(isset($params_data['slug'])){
                 $args['slug'] = $params_data['slug'];
-                $args_count['slug'] = $params_data['slug'];
             }
             $categories_count = 0;
             $categories = get_terms($args);
