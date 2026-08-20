@@ -15,7 +15,8 @@ class WPCategoriesModel {
                 'hide_empty' => false,
                 'exclude' => $uncategorized_id, 
                 'number' => $per_page,
-                'offset' => $offset,
+                'offset' => $offset,                
+                'orderby' => 'id',
             );
             
             if(isset($params_data['slug'])){

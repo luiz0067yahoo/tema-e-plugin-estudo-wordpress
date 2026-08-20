@@ -1,6 +1,13 @@
-<!-- wp:template-part {"slug":"header","area":"header"} /-->
+<?php
+/**
+ * Archive Template for Tema Estudo.
+ *
+ * @package TemaEstudo
+ */
 
-<!-- wp:group {"tagName":"main","className":"main-container"} -->
+get_header();
+?>
+
 <main class="main-container">
     <section class="content-area">
         <div id="api-category-page-container"></div>
@@ -9,6 +16,6 @@
         </div>
     </section>
 </main>
-<!-- /wp:group -->
 
-<!-- wp:template-part {"slug":"footer","area":"footer"} /-->
+<?php
+get_footer();

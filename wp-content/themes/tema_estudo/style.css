@@ -27,11 +27,65 @@ html, body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+.site-header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.site-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.site-logo {
+    max-height: 55px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.site-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.site-title a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.site-description {
+    margin: 0.2rem 0 0 0;
+    color: #a0a5b5;
+    font-size: 0.95rem;
+}
+
 .site-navigation {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.site-navigation .nav-menu {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
     gap: 0.5rem 1rem;
     align-items: center;
+}
+
+.site-navigation .nav-item-wrap {
+    margin: 0;
+    padding: 0;
 }
 
 .site-navigation a {
@@ -41,6 +95,7 @@ html, body {
     padding: 0.4rem 0.85rem;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.08);
+    display: inline-block;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -50,31 +105,11 @@ html, body {
     color: #ffffff;
 }
 
-.site-title {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-}
-
-.site-description {
-    margin-top: 0.25rem;
-    color: #a0a5b5;
-    font-size: 0.95rem;
-}
-
 .main-container {
     max-width: 1200px;
     margin: 2rem auto;
     padding: 0 1.5rem;
-    display: grid;
-    grid-template-columns: 3fr 1fr;
-    gap: 2rem;
-}
-
-@media (max-width: 768px) {
-    .main-container {
-        grid-template-columns: 1fr;
-    }
+    display: block;
 }
 
 /* Category Page Card (Conteúdo da página antes dos posts) */
@@ -108,14 +143,19 @@ html, body {
     color: #333333;
 }
 
-/* Fluid Posts Grid: 320px minimum column width */
+/* Fluid Posts Layout: Flexbox container */
 .api-posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
     gap: 1.5rem;
+    width: 100%;
 }
 
 .api-post-card {
+    flex: 1 1 320px;
+    max-width: 100%;
     background: #ffffff;
     border-radius: 8px;
     padding: 1.25rem;
@@ -123,7 +163,16 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
+    text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.api-post-card > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .api-post-card:hover {
@@ -256,4 +305,63 @@ html, body {
 
 .api-button:hover {
     background: #c83349;
+}
+
+/* 404 Page Styling */
+.api-404-container {
+    padding: 3rem 1rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 55vh;
+    width: 100%;
+}
+
+.api-404-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    max-width: 550px;
+    width: 100%;
+    margin: 0 auto;
+    border-top: 5px solid #e94560;
+}
+
+.api-404-code {
+    font-size: 4.5rem;
+    font-weight: 800;
+    color: #e94560;
+    margin: 0;
+    line-height: 1;
+}
+
+.api-404-title {
+    font-size: 1.6rem;
+    color: #16213e;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.api-404-message {
+    color: #555555;
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+}
+
+.api-button-404 {
+    display: inline-block;
+    background: #e94560;
+    color: #ffffff;
+    padding: 0.65rem 1.35rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+
+.api-button-404:hover {
+    background: #c83349;
+    color: #ffffff;
 }

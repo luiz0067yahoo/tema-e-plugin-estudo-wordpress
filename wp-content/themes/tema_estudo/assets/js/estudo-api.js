@@ -36,8 +36,19 @@ class EstudoAPIClient {
      * Helper method to send requests with resilience, nonces, and JWT auth
      */
     async request(endpoint, options = {}) {
-        const url = `${this.config.apiUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
-        
+        let cleanEndpoint = endpoint.replace(/^\//, '');
+        let baseUrl = (this.config.apiUrl || '/wp-json/api/v1/').replace(/\/$/, '');
+
+        let url;
+        if (baseUrl.includes('?')) {
+            if (cleanEndpoint.includes('?')) {
+                cleanEndpoint = cleanEndpoint.replace('?', '&');
+            }
+            url = `${baseUrl}/${cleanEndpoint}`;
+        } else {
+            url = `${baseUrl}/${cleanEndpoint}`;
+        }
+
         const headers = {
             'Content-Type': 'application/json',
             'X-WP-Nonce': this.config.nonce,
@@ -56,7 +67,7 @@ class EstudoAPIClient {
 
         try {
             const response = await fetch(url, config);
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido na requisição.' }));
                 throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
@@ -64,7 +75,7 @@ class EstudoAPIClient {
 
             return await response.json();
         } catch (error) {
-            console.error(`[API Estudo Error] Endpoint: ${endpoint}`, error.message);
+            console.error(`[API Estudo Error] Endpoint: ${endpoint} | URL: ${url}`, error.message);
             throw error;
         }
     }
@@ -92,9 +103,37 @@ class EstudoAPIClient {
         return await this.request(endpoint, { method: 'GET' });
     }
 
-    // Get Categories
+    // Get Categories via REST API endpoint (/wp-json/api/v1/categories)
     async getCategories() {
-        return await this.request('categories', { method: 'GET' });
+        try {
+            const data = await this.request('categories', { method: 'GET' });
+            if (data && (Array.isArray(data) || (data.data && Array.isArray(data.data)))) {
+                return data;
+            }
+        } catch (err) {
+            console.warn('[API Estudo] Endpoint /wp-json/api/v1/categories falhou. Tentando fallback para /wp-json/wp/v2/categories...', err);
+        }
+
+        // Fallback nativo para a API REST padrao do WordPress
+        try {
+            const wpRestBase = (this.config.wpRestUrl || '/wp-json/').replace(/\/$/, '');
+            const sep = wpRestBase.includes('?') ? '&' : '?';
+            const response = await fetch(`${wpRestBase}/wp/v2/categories${sep}hide_empty=false&per_page=100`);
+            if (response.ok) {
+                const wpCats = await response.json();
+                return wpCats.map(cat => ({
+                    id: cat.id,
+                    name: cat.name,
+                    slug: cat.slug,
+                    count: cat.count || 0,
+                    description: cat.description || ''
+                }));
+            }
+        } catch (fallbackErr) {
+            console.error('[API Estudo] Falha ao carregar categorias via fallback WP REST API:', fallbackErr);
+        }
+
+        return [];
     }
 
     // Get Settings
@@ -142,20 +181,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Load Site Settings dynamically into Header / Footer slots
+ * Load Site Settings dynamically via AJAX (/wp-json/api/v1/settings)
  */
 async function initSiteSettings() {
+    const logoEl = document.getElementById('api-site-logo');
     const titleEl = document.getElementById('api-site-title');
     const descEl = document.getElementById('api-site-description');
 
-    if (!titleEl && !descEl) return;
+    if (!logoEl && !titleEl && !descEl) return;
 
     try {
+        // Requisicao AJAX para a rota /wp-json/api/v1/settings
         const settings = await window.estudoAPI.getSettings();
-        if (titleEl && settings.title) titleEl.textContent = settings.title;
-        if (descEl && settings.description) descEl.textContent = settings.description;
+
+        if (settings) {
+            if (titleEl) {
+                const titleLink = titleEl.querySelector('a') || titleEl;
+                if (settings.title) {
+                    titleLink.textContent = settings.title;
+                }
+            }
+
+            if (descEl && settings.description !== undefined) {
+                descEl.textContent = settings.description;
+            }
+
+            if (logoEl && settings.logo) {
+                logoEl.src = settings.logo;
+                logoEl.alt = settings.title || 'Logo';
+                logoEl.style.display = 'inline-block';
+            }
+        }
     } catch (err) {
-        console.warn('Nao foi possivel carregar configurações via API:', err);
+        console.warn('Erro ao carregar configuracoes via AJAX (/wp-json/api/v1/settings):', err);
     }
 }
 
@@ -193,20 +251,30 @@ async function initCategoriesList() {
     const sidebarNav = document.getElementById('api-categories-container');
 
     try {
-        const categories = await window.estudoAPI.getCategories();
-        if (!categories || !Array.isArray(categories)) return;
+        const catRes = await window.estudoAPI.getCategories();
+        const categories = Array.isArray(catRes) ? catRes : (catRes && Array.isArray(catRes.data) ? catRes.data : []);
+
+        if (!categories || categories.length === 0) {
+            console.warn('Nenhuma categoria retornada pela API.');
+            return;
+        }
 
         const currentCatSlug = getCurrentCategoryFromURL(categories);
 
-        // Render Header Main Navigation Menu with verbose category slugs (/minhacategoria)
+        // Render Header Main Navigation Menu: Cada Categoria como um item de Menu NAV (ul/li)
         if (headerNav) {
             headerNav.innerHTML = `
-                <a href="/" class="nav-item ${!currentCatSlug ? 'active' : ''}">Home</a>
-                ${categories.map(cat => {
-                    const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
-                    const isActive = currentCatSlug === slug;
-                    return `<a href="/${slug}" class="nav-item ${isActive ? 'active' : ''}">${cat.name}</a>`;
-                }).join('')}
+                <ul class="nav-menu">
+                    ${categories.map(cat => {
+                const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
+                const isActive = currentCatSlug === slug;
+                return `
+                            <li class="nav-item-wrap">
+                                <a href="/${slug}" class="nav-item ${isActive ? 'active' : ''}">${cat.name}</a>
+                            </li>
+                        `;
+            }).join('')}
+                </ul>
             `;
         }
 
@@ -216,15 +284,30 @@ async function initCategoriesList() {
                 <ul class="api-cat-list">
                     <li><a href="/">Todas as Categorias</a></li>
                     ${categories.map(cat => {
-                        const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
-                        return `<li><a href="/${slug}">${cat.name} (${cat.count || 0})</a></li>`;
-                    }).join('')}
+                const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
+                return `<li><a href="/${slug}">${cat.name} (${cat.count || 0})</a></li>`;
+            }).join('')}
                 </ul>
             `;
         }
     } catch (err) {
         console.warn('Erro ao carregar categorias:', err);
     }
+}
+
+function render404HTML(customMessage = 'Desculpe, a página ou conteúdo solicitado não foi encontrado ou não existe no sistema.') {
+    return `
+        <div class="api-404-container">
+            <div class="api-404-card">
+                <h1 class="api-404-code">404</h1>
+                <h2 class="api-404-title">Conteúdo Não Encontrado</h2>
+                <p class="api-404-message">${customMessage}</p>
+                <div class="api-404-actions">
+                    <a href="/" class="api-button-404">&larr; Voltar para a Página Inicial</a>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -237,13 +320,14 @@ async function initPostsFeed() {
 
     if (!postsContainer) return;
 
-    postsContainer.innerHTML = '<div class="api-loading">Carregando publicações...</div>';
+    postsContainer.innerHTML = '<div class="api-loading"></div>';
     if (categoryPageContainer) categoryPageContainer.innerHTML = '';
 
     try {
         let categories = [];
         try {
-            categories = await window.estudoAPI.getCategories();
+            const catRes = await window.estudoAPI.getCategories();
+            categories = Array.isArray(catRes) ? catRes : (catRes && Array.isArray(catRes.data) ? catRes.data : []);
         } catch (e) {
             categories = [];
         }
@@ -288,9 +372,15 @@ async function initPostsFeed() {
         const posts = Array.isArray(postsRes) ? postsRes : (postsRes && postsRes.data ? postsRes.data : []);
 
         if (!posts || posts.length === 0) {
-            postsContainer.innerHTML = '<p class="api-empty">Nenhum post encontrado nesta categoria.</p>';
+            if (!categoryPageContainer || !categoryPageContainer.innerHTML.trim()) {
+                postsContainer.innerHTML = render404HTML('Nenhum artigo ou publicação foi encontrada nesta categoria.');
+            } else {
+                postsContainer.innerHTML = '<p class="api-empty">Nenhum post adicional nesta categoria.</p>';
+            }
             return;
         }
+
+        const isSinglePost = posts.length === 1;
 
         postsContainer.innerHTML = posts.map(post => {
             const postId = post.id || post.ID;
@@ -298,6 +388,7 @@ async function initPostsFeed() {
             const thumbUrl = post.thumbnail || post.featured_image || (post.images && post.images.length > 0 ? post.images[0].src : '');
             const rawContent = post.description || post.post_content || '';
             const excerpt = post.short_description || post.post_excerpt || (rawContent ? rawContent.replace(/<[^>]+>/g, '').substring(0, 110) + '...' : '');
+            const contentToDisplay = isSinglePost ? rawContent : excerpt;
             const rawDate = post.date_created || post.post_date;
             const dateFormatted = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : 'N/A';
 
@@ -310,7 +401,7 @@ async function initPostsFeed() {
                         </h3>
                     </div>
                     <div>
-                        ${excerpt ? `<div class="api-post-excerpt">${excerpt}</div>` : ''}
+                        ${contentToDisplay ? `<div class="api-post-excerpt">${contentToDisplay}</div>` : ''}
                         <div class="api-post-meta">
                             <span>Data: ${dateFormatted}</span>
                         </div>
@@ -320,7 +411,7 @@ async function initPostsFeed() {
         }).join('');
 
     } catch (err) {
-        postsContainer.innerHTML = `<div class="api-error">Falha ao carregar conteúdo via REST API. (${err.message})</div>`;
+        postsContainer.innerHTML = render404HTML(`Não foi possível carregar o conteúdo via REST API. (${err.message})`);
     }
 }
 
@@ -335,29 +426,29 @@ async function initSinglePostView() {
     const postId = urlParams.get('post_id');
 
     if (!postId) {
-        container.innerHTML = '<p class="api-error">ID de publicação não especificado.</p>';
+        container.innerHTML = render404HTML('ID de publicação não especificado.');
         return;
     }
 
-    container.innerHTML = '<div class="api-loading">Carregando artigo...</div>';
+    container.innerHTML = '<div class="api-loading"></div>';
 
     try {
         const post = await window.estudoAPI.getPostById(postId);
-        
+
         if (!post) {
-            container.innerHTML = '<p class="api-empty">Publicação não encontrada.</p>';
+            container.innerHTML = render404HTML('Publicação não encontrada.');
             return;
         }
 
         container.innerHTML = `
             <article class="api-single-article">
-                <h1 class="api-single-title">${post.post_title || post.title || 'Sem título'}</h1>
+                <h1 class="api-single-title">${post.post_title || post.title || post.name || 'Sem título'}</h1>
                 <div class="api-single-meta">
-                    Publicado em: ${post.post_date ? new Date(post.post_date).toLocaleDateString('pt-BR') : 'N/A'}
+                    Publicado em: ${post.post_date || post.date_created ? new Date(post.post_date || post.date_created).toLocaleDateString('pt-BR') : 'N/A'}
                 </div>
-                ${post.featured_image ? `<img src="${post.featured_image}" class="api-single-thumb" alt="" />` : ''}
+                ${post.featured_image || post.thumbnail ? `<img src="${post.featured_image || post.thumbnail}" class="api-single-thumb" alt="" />` : ''}
                 <div class="api-single-content">
-                    ${post.post_content || post.content || ''}
+                    ${post.post_content || post.description || post.content || ''}
                 </div>
                 <div class="api-back-link">
                     <a href="javascript:history.back()">&larr; Voltar para a lista</a>
@@ -365,7 +456,7 @@ async function initSinglePostView() {
             </article>
         `;
     } catch (err) {
-        container.innerHTML = `<div class="api-error">Erro ao carregar post: ${err.message}</div>`;
+        container.innerHTML = render404HTML(`Erro ao carregar post: ${err.message}`);
     }
 }
 
