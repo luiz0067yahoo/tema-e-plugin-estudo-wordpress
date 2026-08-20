@@ -54,7 +54,17 @@ function tema_estudo_enqueue_scripts() {
 			'nonce'       => wp_create_nonce( 'wp_rest' ),
 			'siteName'    => get_bloginfo( 'name' ),
 			'description' => get_bloginfo( 'description' ),
+			'homeUrl'     => esc_url( home_url( '/' ) ),
 		)
 	);
 }
 add_action( 'wp_enqueue_scripts', 'tema_estudo_enqueue_scripts' );
+
+/**
+ * Flush rewrite rules on theme activation or support category slug routes
+ */
+function tema_estudo_category_rewrite_rules() {
+	add_rewrite_rule( '^category/([^/]+)/?$', 'index.php?category_name=$matches[1]', 'top' );
+}
+add_action( 'init', 'tema_estudo_category_rewrite_rules' );
+

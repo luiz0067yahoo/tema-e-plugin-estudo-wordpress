@@ -25,7 +25,11 @@ class WPPostsDataModel {
             }
 
             if (!empty($category_slug)) {
-                $args['category_name'] = $category_slug;
+                if (is_numeric($category_slug)) {
+                    $args['cat'] = intval($category_slug);
+                } else {
+                    $args['category_name'] = $category_slug;
+                }
             }
 
             $query = new WP_Query($args);

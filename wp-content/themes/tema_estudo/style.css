@@ -27,17 +27,27 @@ html, body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.site-header-container {
-    max-width: 1200px;
-    margin: 0 auto;
+.site-navigation {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
     align-items: center;
 }
 
-.site-header a {
+.site-navigation a {
     color: #ffffff;
     text-decoration: none;
+    font-weight: 500;
+    padding: 0.4rem 0.85rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.site-navigation a:hover,
+.site-navigation a.active {
+    background: #e94560;
+    color: #ffffff;
 }
 
 .site-title {
@@ -67,9 +77,41 @@ html, body {
     }
 }
 
+/* Category Page Card (Conteúdo da página antes dos posts) */
+.api-category-page-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 2rem;
+    border-left: 5px solid #e94560;
+}
+
+.api-category-page-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.6rem;
+    color: #16213e;
+}
+
+.api-category-page-thumb {
+    width: 100%;
+    max-height: 350px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.api-category-page-content {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #333333;
+}
+
+/* Fluid Posts Grid: 320px minimum column width */
 .api-posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.5rem;
 }
 
@@ -89,9 +131,19 @@ html, body {
     box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
+.api-post-thumb {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    background-color: #e2e8f0;
+}
+
 .api-post-title {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     margin: 0 0 0.5rem 0;
+    line-height: 1.4;
 }
 
 .api-post-title a {

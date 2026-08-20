@@ -160,69 +160,167 @@ async function initSiteSettings() {
 }
 
 /**
- * Load Posts Grid dynamically into index / archive templates
+ * Helper to get current category slug or ID from URL path or query params
  */
-async function initPostsFeed() {
-    const container = document.getElementById('api-posts-container');
-    if (!container) return;
-
-    container.innerHTML = '<div class="api-loading">Carregando publicações...</div>';
-
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const catId = urlParams.get('category');
-        const params = catId ? { category: catId } : {};
-
-        const posts = await window.estudoAPI.getPosts(params);
-
-        if (!posts || (Array.isArray(posts) && posts.length === 0)) {
-            container.innerHTML = '<p class="api-empty">Nenhum post encontrado.</p>';
-            return;
+function getCurrentCategoryFromURL(categories = []) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const catQuery = urlParams.get('category');
+    if (catQuery) {
+        // If numeric ID, try finding category by ID
+        if (!isNaN(catQuery)) {
+            const match = categories.find(c => String(c.id || c.term_id) === String(catQuery));
+            if (match) return match.slug;
         }
-
-        const postsArray = Array.isArray(posts) ? posts : [posts];
-
-        container.innerHTML = postsArray.map(post => `
-            <article class="api-post-card">
-                ${post.featured_image ? `<img src="${post.featured_image}" class="api-post-thumb" alt="${post.post_title || post.title || ''}" />` : ''}
-                <h3 class="api-post-title">
-                    <a href="?post_id=${post.ID || post.id}">${post.post_title || post.title || 'Sem título'}</a>
-                </h3>
-                <div class="api-post-excerpt">
-                    ${post.post_excerpt || post.excerpt || (post.post_content ? post.post_content.substring(0, 120) + '...' : '')}
-                </div>
-                <div class="api-post-meta">
-                    <span>Data: ${post.post_date ? new Date(post.post_date).toLocaleDateString('pt-BR') : 'N/A'}</span>
-                </div>
-            </article>
-        `).join('');
-
-    } catch (err) {
-        container.innerHTML = `<div class="api-error">Falha ao carregar posts via REST API. (${err.message})</div>`;
+        return catQuery;
     }
+
+    // Check path (e.g. /minhacategoria or /category/minhacategoria)
+    const pathSegments = window.location.pathname.split('/').filter(p => p && p !== 'index.php');
+    if (pathSegments.length > 0) {
+        const lastSegment = pathSegments[pathSegments.length - 1];
+        const match = categories.find(c => c.slug === lastSegment);
+        if (match) return match.slug;
+    }
+
+    return null;
 }
 
 /**
- * Load Categories List
+ * Load Categories List and render in Main Header Navigation & Sidebar
  */
 async function initCategoriesList() {
-    const container = document.getElementById('api-categories-container');
-    if (!container) return;
+    const headerNav = document.getElementById('api-header-nav');
+    const sidebarNav = document.getElementById('api-categories-container');
 
     try {
         const categories = await window.estudoAPI.getCategories();
         if (!categories || !Array.isArray(categories)) return;
 
-        container.innerHTML = `
-            <ul class="api-cat-list">
-                <li><a href="${window.location.pathname}">Todas as Categorias</a></li>
-                ${categories.map(cat => `
-                    <li><a href="?category=${cat.term_id || cat.id}">${cat.name} (${cat.count || 0})</a></li>
-                `).join('')}
-            </ul>
-        `;
+        const currentCatSlug = getCurrentCategoryFromURL(categories);
+
+        // Render Header Main Navigation Menu with verbose category slugs (/minhacategoria)
+        if (headerNav) {
+            headerNav.innerHTML = `
+                <a href="/" class="nav-item ${!currentCatSlug ? 'active' : ''}">Home</a>
+                ${categories.map(cat => {
+                    const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
+                    const isActive = currentCatSlug === slug;
+                    return `<a href="/${slug}" class="nav-item ${isActive ? 'active' : ''}">${cat.name}</a>`;
+                }).join('')}
+            `;
+        }
+
+        // Render Sidebar Category list with verbose category slugs
+        if (sidebarNav) {
+            sidebarNav.innerHTML = `
+                <ul class="api-cat-list">
+                    <li><a href="/">Todas as Categorias</a></li>
+                    ${categories.map(cat => {
+                        const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
+                        return `<li><a href="/${slug}">${cat.name} (${cat.count || 0})</a></li>`;
+                    }).join('')}
+                </ul>
+            `;
+        }
     } catch (err) {
         console.warn('Erro ao carregar categorias:', err);
+    }
+}
+
+/**
+ * Load Category Page content (first) if present, then load Posts Grid (320px fluid layout)
+ */
+async function initPostsFeed() {
+    const postsContainer = document.getElementById('api-posts-container');
+    const categoryPageContainer = document.getElementById('api-category-page-container');
+    const sectionTitle = document.getElementById('api-section-title');
+
+    if (!postsContainer) return;
+
+    postsContainer.innerHTML = '<div class="api-loading">Carregando publicações...</div>';
+    if (categoryPageContainer) categoryPageContainer.innerHTML = '';
+
+    try {
+        let categories = [];
+        try {
+            categories = await window.estudoAPI.getCategories();
+        } catch (e) {
+            categories = [];
+        }
+
+        const currentCatSlug = getCurrentCategoryFromURL(categories);
+        const currentCategory = Array.isArray(categories) ? categories.find(c => c.slug === currentCatSlug) : null;
+
+        // 1. SE TIVER A PÁGINA NA CATEGORIA: Buscar primeiro a página com o mesmo slug da categoria
+        if (currentCatSlug) {
+            if (sectionTitle) {
+                sectionTitle.textContent = `Categoria: ${currentCategory ? currentCategory.name : currentCatSlug}`;
+            }
+
+            try {
+                const pageRes = await window.estudoAPI.getPages({ slug: currentCatSlug });
+                const pagesArray = Array.isArray(pageRes) ? pageRes : (pageRes && pageRes.data ? pageRes.data : []);
+
+                // Procura a página que corresponde exatamente ao slug da categoria
+                const matchingPage = pagesArray.find(p => p.slug === currentCatSlug || p.post_name === currentCatSlug) || (pagesArray.length > 0 ? pagesArray[0] : null);
+
+                if (matchingPage && categoryPageContainer) {
+                    const pageTitle = matchingPage.name || matchingPage.title || matchingPage.post_title || '';
+                    const pageThumb = matchingPage.thumbnail || matchingPage.featured_image || null;
+                    const pageContent = matchingPage.description || matchingPage.content || matchingPage.post_content || matchingPage.short_description || '';
+
+                    categoryPageContainer.innerHTML = `
+                        <section class="api-category-page-card">
+                            <h2 class="api-category-page-title">${pageTitle}</h2>
+                            ${pageThumb ? `<img src="${pageThumb}" class="api-category-page-thumb" alt="${pageTitle}" />` : ''}
+                            <div class="api-category-page-content">${pageContent}</div>
+                        </section>
+                    `;
+                }
+            } catch (pageErr) {
+                console.warn('Nenhuma página vinculada a esta categoria encontrada:', pageErr);
+            }
+        }
+
+        // 2. LISTAR POSTS: 320px de largura com thumbnail, título e layout fluido
+        const params = currentCatSlug ? { category: currentCatSlug } : {};
+        const postsRes = await window.estudoAPI.getPosts(params);
+        const posts = Array.isArray(postsRes) ? postsRes : (postsRes && postsRes.data ? postsRes.data : []);
+
+        if (!posts || posts.length === 0) {
+            postsContainer.innerHTML = '<p class="api-empty">Nenhum post encontrado nesta categoria.</p>';
+            return;
+        }
+
+        postsContainer.innerHTML = posts.map(post => {
+            const postId = post.id || post.ID;
+            const postTitle = post.name || post.post_title || post.title || 'Sem título';
+            const thumbUrl = post.thumbnail || post.featured_image || (post.images && post.images.length > 0 ? post.images[0].src : '');
+            const rawContent = post.description || post.post_content || '';
+            const excerpt = post.short_description || post.post_excerpt || (rawContent ? rawContent.replace(/<[^>]+>/g, '').substring(0, 110) + '...' : '');
+            const rawDate = post.date_created || post.post_date;
+            const dateFormatted = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : 'N/A';
+
+            return `
+                <article class="api-post-card">
+                    <div>
+                        ${thumbUrl ? `<img src="${thumbUrl}" class="api-post-thumb" alt="${postTitle}" />` : ''}
+                        <h3 class="api-post-title">
+                            <a href="?post_id=${postId}">${postTitle}</a>
+                        </h3>
+                    </div>
+                    <div>
+                        ${excerpt ? `<div class="api-post-excerpt">${excerpt}</div>` : ''}
+                        <div class="api-post-meta">
+                            <span>Data: ${dateFormatted}</span>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+    } catch (err) {
+        postsContainer.innerHTML = `<div class="api-error">Falha ao carregar conteúdo via REST API. (${err.message})</div>`;
     }
 }
 
