@@ -3,17 +3,205 @@ Theme Name: Tema estudo
 Theme URI: https://luizbrogliatto.freedev.app/
 Author: Luiz Fernando
 Author URI: https://github.com/luiz0067yahoo/
-Description: Tema Estudo WordPress desenvolvido do zero.
+Description: Tema Estudo WordPress desenvolvido do zero com suporte FSE e consumo da API REST do Plugin Estudo.
 Version: 1.0
 Requires at least: 7.0
 Requires PHP: 8.0
 License: CopyRight Luiz Fernando
 Text Domain: meu-tema
 */
-html, body{
-    width:100%;
-    height:100%;
-	margin: 0 0 0 0;
-    padding: 0 0 0 0;    
+
+html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
 }
 
+.site-header {
+    background: #1a1a2e;
+    color: #ffffff;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.site-header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.site-header a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.site-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.site-description {
+    margin-top: 0.25rem;
+    color: #a0a5b5;
+    font-size: 0.95rem;
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.api-posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.api-post-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.api-post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.api-post-title {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.api-post-title a {
+    color: #16213e;
+    text-decoration: none;
+}
+
+.api-post-title a:hover {
+    color: #e94560;
+}
+
+.api-post-excerpt {
+    font-size: 0.95rem;
+    color: #555555;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.api-post-meta {
+    font-size: 0.8rem;
+    color: #888888;
+}
+
+.sidebar-card {
+    background: #ffffff;
+    padding: 1.25rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-title {
+    font-size: 1.1rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e94560;
+    padding-bottom: 0.25rem;
+}
+
+.api-cat-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.api-cat-list li {
+    margin-bottom: 0.5rem;
+}
+
+.api-cat-list a {
+    color: #0f3460;
+    text-decoration: none;
+}
+
+.api-cat-list a:hover {
+    text-decoration: underline;
+}
+
+.api-loading {
+    padding: 2rem;
+    text-align: center;
+    color: #666666;
+    font-style: italic;
+}
+
+.api-error {
+    padding: 1rem;
+    background: #ffe6e6;
+    color: #cc0000;
+    border-radius: 6px;
+}
+
+.site-footer {
+    background: #1a1a2e;
+    color: #a0a5b5;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    margin-top: 3rem;
+}
+
+/* Auth Login Styling */
+.api-form-group {
+    margin-bottom: 0.75rem;
+}
+
+.api-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.api-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.api-button {
+    background: #e94560;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 600;
+}
+
+.api-button:hover {
+    background: #c83349;
+}

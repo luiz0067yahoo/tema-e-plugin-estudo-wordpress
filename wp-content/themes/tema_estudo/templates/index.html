@@ -1,1 +1,41 @@
-oi
+<!-- wp:template-part {"slug":"header","area":"header"} /-->
+
+<!-- wp:group {"tagName":"main","className":"main-container"} -->
+<main class="main-container">
+    <section class="content-area">
+        <h2 style="margin-top: 0;">Publicações do Backend (API REST)</h2>
+        <div id="api-posts-container" class="api-posts-grid">
+            <div class="api-loading">Iniciando requisição à API...</div>
+        </div>
+    </section>
+
+    <aside class="sidebar-area">
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">Categorias</h3>
+            <div id="api-categories-container">
+                <p>Carregando categorias...</p>
+            </div>
+        </div>
+
+        <div class="sidebar-card">
+            <h3 class="sidebar-title">Área do Usuário (JWT Auth)</h3>
+            <div id="api-auth-box">
+                <form id="api-login-form">
+                    <div class="api-form-group">
+                        <label for="username">Usuário / E-mail</label>
+                        <input type="text" id="username" name="username" class="api-input" required />
+                    </div>
+                    <div class="api-form-group">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" name="password" class="api-input" required />
+                    </div>
+                    <button type="submit" class="api-button">Entrar via REST API</button>
+                </form>
+                <div id="api-login-status" style="margin-top: 0.5rem; font-size: 0.85rem;"></div>
+            </div>
+        </div>
+    </aside>
+</main>
+<!-- /wp:group -->
+
+<!-- wp:template-part {"slug":"footer","area":"footer"} /-->
