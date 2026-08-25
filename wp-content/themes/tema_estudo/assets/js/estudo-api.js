@@ -515,75 +515,79 @@ function initAuthModal() {
 }
 
 /**
- * Inicializa a interatividade de blocos do Gutenberg (Sanfonas / Accordions / Details)
+ * Inicializa a interatividade de blocos do Gutenberg e Sanfonas (Accordions Nativos & Plugins)
  */
 function initBlockInteractivity(container = document) {
     if (!container) return;
 
-    // 1. Suporte a elementos nativos de detalhes/sanfona do Gutenberg (<details><summary>)
+    // 1. Sincroniza estado inicial dos elementos <details> nativos ou .wp-block-details
     const detailsElements = container.querySelectorAll('details, .wp-block-details');
     detailsElements.forEach(details => {
-        // Sincroniza a classe 'is-open' com base no estado do atributo 'open'
-        if (details.open || details.hasAttribute('open')) {
+        if (details.hasAttribute('open') || details.open) {
             details.classList.add('is-open');
         } else {
             details.classList.remove('is-open');
         }
-
-        const summary = details.querySelector('summary, .wp-block-details__summary');
-        if (summary) {
-            summary.style.cursor = 'pointer';
-            summary.removeEventListener('click', handleSummaryClick);
-            summary.addEventListener('click', handleSummaryClick);
-        }
-
-        details.removeEventListener('toggle', handleDetailsToggle);
-        details.addEventListener('toggle', handleDetailsToggle);
     });
 
-    // 2. Suporte a componentes e plugins de Sanfona customizados (.wp-block-accordion, .accordion-header, .accordion-item, .su-spoiler)
-    const accordionHeaders = container.querySelectorAll('.accordion-header, .wp-block-accordion__header, .accordion-toggle, .su-spoiler-title, .faq-header');
-    accordionHeaders.forEach(header => {
-        header.style.cursor = 'pointer';
-        header.removeEventListener('click', handleAccordionHeaderClick);
-        header.addEventListener('click', handleAccordionHeaderClick);
+    // 2. Sincroniza estado inicial de sanfonas baseadas em divs/buttons (Gutenberg & Plugins)
+    const accordionItems = container.querySelectorAll('.accordion-item, .wp-block-accordion, .uagb-faq-item, .uagb-faq-child__outer-wrap, .uagb-accordion-child__outer-wrap, .kt-accordion-pane, .su-spoiler, .faq-item, .api-accordion-block');
+    accordionItems.forEach(item => {
+        const isOpen = item.classList.contains('is-open');
+        const trigger = item.querySelector('summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, button');
+        const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer')
+                     || Array.from(item.children).find(child => child !== trigger && (!trigger || !child.contains(trigger)));
+
+        if (content && content !== trigger) {
+            content.style.display = isOpen ? 'block' : 'none';
+        }
     });
 }
 
-function handleSummaryClick(e) {
-    const summary = e.currentTarget;
-    const details = summary.closest('details, .wp-block-details');
-    if (details) {
+/**
+ * Delegador de Eventos Global de Clique para Sanfonas
+ */
+document.addEventListener('click', function(e) {
+    // Procura por botões, summaries ou títulos H1-H6 de sanfona clicados
+    const trigger = e.target.closest('summary, .wp-block-details__summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, .su-spoiler-title, .faq-header, details summary, .accordion-item > button, details button, .wp-block-details button, [data-toggle="accordion"], h1, h2, h3, h4, h5, h6');
+
+    if (!trigger) return;
+
+    const details = trigger.closest('details, .wp-block-details');
+    const accordionItem = trigger.closest('.accordion-item, .wp-block-accordion, .uagb-faq-item, .uagb-faq-child__outer-wrap, .uagb-accordion-child__outer-wrap, .kt-accordion-pane, .su-spoiler, .faq-item, .api-accordion-block');
+
+    // 1. Tratamento para tags <details> (Gutenberg Core Details)
+    if (details && details.tagName.toLowerCase() === 'details') {
         setTimeout(() => {
             if (details.open || details.hasAttribute('open')) {
                 details.classList.add('is-open');
             } else {
                 details.classList.remove('is-open');
             }
-        }, 40);
+        }, 15);
+        return;
     }
-}
 
-function handleDetailsToggle(e) {
-    const details = e.currentTarget;
-    if (details.open || details.hasAttribute('open')) {
-        details.classList.add('is-open');
-    } else {
-        details.classList.remove('is-open');
-    }
-}
+    // 2. Tratamento para Sanfonas baseadas em div/button (Plugins / Custom)
+    if (details || accordionItem) {
+        const item = details || accordionItem;
+        e.preventDefault();
+        const isOpen = item.classList.contains('is-open') || item.hasAttribute('open');
 
-function handleAccordionHeaderClick(e) {
-    e.preventDefault();
-    const header = e.currentTarget;
-    const parent = header.closest('.accordion-item, .wp-block-accordion, .accordion, .su-spoiler, .faq-item');
-    if (parent) {
-        const isOpen = parent.classList.contains('is-open');
-        parent.classList.toggle('is-open');
-        const content = parent.querySelector('.accordion-content, .wp-block-accordion__content, .su-spoiler-content, .faq-answer');
-        if (content) {
+        if (isOpen) {
+            item.classList.remove('is-open');
+            item.removeAttribute('open');
+        } else {
+            item.classList.add('is-open');
+            item.setAttribute('open', 'true');
+        }
+
+        const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer, .wp-block-details__content')
+                     || Array.from(item.children).find(child => child !== trigger && !child.contains(trigger));
+
+        if (content && content !== trigger) {
             content.style.display = isOpen ? 'none' : 'block';
         }
     }
-}
+});
 

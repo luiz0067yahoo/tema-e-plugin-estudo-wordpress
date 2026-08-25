@@ -401,15 +401,46 @@ details.is-open,
     box-shadow: 0 4px 12px rgba(233, 69, 96, 0.08);
 }
 
+/* Reset e Padronização dos Botões/Títulos Internos da Sanfona */
+details summary button,
+details button,
+.wp-block-details summary button,
+.wp-block-details button,
+.accordion-header button,
+.uagb-faq-questions-button button,
+.wp-block-accordion__header button {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: inherit !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: inherit !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    text-align: left !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
 /* Cabeçalho da Sanfona / Summary */
 details > summary,
 .wp-block-details > summary,
 .accordion-header,
 .wp-block-accordion__header,
+.uagb-faq-questions-button,
+.uagb-accordion-header,
+.kt-blocks-accordion-header,
 .su-spoiler-title,
 .faq-header {
+    width: 100%;
+    box-sizing: border-box;
     padding: 1rem 1.25rem;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #1e293b;
     cursor: pointer;
@@ -420,6 +451,7 @@ details > summary,
     align-items: center;
     user-select: none;
     background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -429,7 +461,8 @@ details > summary::-webkit-details-marker {
 
 details > summary:hover,
 .accordion-header:hover,
-.wp-block-accordion__header:hover {
+.wp-block-accordion__header:hover,
+.uagb-faq-questions-button:hover {
     background-color: #f1f5f9;
     color: #e94560;
 }
@@ -437,7 +470,8 @@ details > summary:hover,
 details[open] > summary,
 details.is-open > summary,
 .accordion-item.is-open .accordion-header,
-.wp-block-accordion.is-open .wp-block-accordion__header {
+.wp-block-accordion.is-open .wp-block-accordion__header,
+.uagb-faq-item.is-open .uagb-faq-questions-button {
     background-color: #fff5f7;
     color: #e94560;
     border-bottom: 1px solid #fecdd3;
@@ -447,7 +481,8 @@ details.is-open > summary,
 details > summary::after,
 .wp-block-details > summary::after,
 .accordion-header::after,
-.wp-block-accordion__header::after {
+.wp-block-accordion__header::after,
+.uagb-faq-questions-button::after {
     content: '';
     display: inline-block;
     width: 10px;
@@ -463,36 +498,69 @@ details > summary::after,
 details[open] > summary::after,
 details.is-open > summary::after,
 .accordion-item.is-open .accordion-header::after,
-.wp-block-accordion.is-open .wp-block-accordion__header::after {
+.wp-block-accordion.is-open .wp-block-accordion__header::after,
+.uagb-faq-item.is-open .uagb-faq-questions-button::after {
     transform: rotate(-135deg);
     border-color: #e94560;
 }
 
-/* Regras Estritas de Ocultamento e Exibição do Conteúdo da Sanfona */
-details:not([open]) > *:not(summary) {
-    display: none !important;
+/* Títulos da Sanfona (H1-H6, summary, button) DEVEM SEMPRE ESTAR VISÍVEIS (Aberto ou Fechado) */
+details summary,
+details h1, details h2, details h3, details h4, details h5, details h6,
+.wp-block-details summary,
+.wp-block-details h1, .wp-block-details h2, .wp-block-details h3, .wp-block-details h4, .wp-block-details h5, .wp-block-details h6,
+.accordion-item > h1, .accordion-item > h2, .accordion-item > h3, .accordion-item > h4, .accordion-item > h5, .accordion-item > h6,
+.wp-block-accordion > h1, .wp-block-accordion > h2, .wp-block-accordion > h3, .wp-block-accordion > h4, .wp-block-accordion > h5, .wp-block-accordion > h6,
+.uagb-faq-item h1, .uagb-faq-item h2, .uagb-faq-item h3, .uagb-faq-item h4, .uagb-faq-item h5, .uagb-faq-item h6,
+.accordion-header,
+.wp-block-accordion__header,
+.uagb-faq-questions-button,
+.uagb-accordion-header,
+.kt-blocks-accordion-header,
+.su-spoiler-title,
+.faq-header {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 !important;
 }
 
-details[open] > *:not(summary),
-details.is-open > *:not(summary) {
-    display: block !important;
-    padding: 1.25rem;
-    color: #334155;
-    line-height: 1.7;
-    font-size: 1rem;
-    background-color: #ffffff;
-    animation: fadeInAccordion 0.3s ease-in-out;
-}
-
+/* ESTADO FECHADO: Ocultar ESTRITAMENTE APENAS o bloco de conteúdo interno (não os títulos H1-H6/summary) */
+details:not([open]):not(.is-open) .wp-block-details__content,
+details:not([open]):not(.is-open) > div:not(summary),
+details:not([open]):not(.is-open) > p,
+details:not([open]):not(.is-open) > ul,
+details:not([open]):not(.is-open) > ol,
+.wp-block-details:not([open]):not(.is-open) .wp-block-details__content,
+.wp-block-details:not([open]):not(.is-open) > div:not(summary):not(.wp-block-details__summary),
 .accordion-item:not(.is-open) .accordion-content,
 .wp-block-accordion:not(.is-open) .wp-block-accordion__content,
+.uagb-faq-item:not(.is-open) .uagb-faq-content,
+.uagb-accordion-child__outer-wrap:not(.is-open) .uagb-accordion-content,
+.kt-accordion-pane:not(.is-open) .kt-accordion-panel,
 .su-spoiler:not(.is-open) .su-spoiler-content,
 .faq-item:not(.is-open) .faq-answer {
     display: none !important;
 }
 
+/* ESTADO ABERTO: Exibir o bloco de conteúdo interno */
+details[open] .wp-block-details__content,
+details.is-open .wp-block-details__content,
+details[open] > div:not(summary),
+details.is-open > div:not(summary),
+details[open] > p,
+details.is-open > p,
+details[open] > ul,
+details.is-open > ul,
+details[open] > ol,
+details.is-open > ol,
+.wp-block-details[open] .wp-block-details__content,
+.wp-block-details.is-open .wp-block-details__content,
 .accordion-item.is-open .accordion-content,
 .wp-block-accordion.is-open .wp-block-accordion__content,
+.uagb-faq-item.is-open .uagb-faq-content,
+.uagb-accordion-child__outer-wrap.is-open .uagb-accordion-content,
+.kt-accordion-pane.is-open .kt-accordion-panel,
 .su-spoiler.is-open .su-spoiler-content,
 .faq-item.is-open .faq-answer {
     display: block !important;
@@ -501,7 +569,7 @@ details.is-open > *:not(summary) {
     line-height: 1.7;
     font-size: 1rem;
     background-color: #ffffff;
-    animation: fadeInAccordion 0.3s ease-in-out;
+    animation: fadeInAccordion 0.25s ease-in-out;
 }
 
 @keyframes fadeInAccordion {
