@@ -332,7 +332,17 @@ async function initPostsFeed() {
             categories = [];
         }
 
-        const currentCatSlug = getCurrentCategoryFromURL(categories);
+        let currentCatSlug = getCurrentCategoryFromURL(categories);
+
+        // Se não houver slug na URL e estiver na raiz / ou /home, redireciona para a primeira categoria cadastrada
+        if (!currentCatSlug && categories.length > 0) {
+            const firstCat = categories.find(c => c.slug && c.slug !== 'uncategorized' && c.name !== 'Sem categoria') || categories[0];
+            if (firstCat && firstCat.slug && (window.location.pathname === '/' || window.location.pathname === '/home' || window.location.pathname === '/home/')) {
+                window.location.href = '/' + firstCat.slug;
+                return;
+            }
+        }
+
         const currentCategory = Array.isArray(categories) ? categories.find(c => c.slug === currentCatSlug) : null;
 
         // 1. SE TIVER A PÁGINA NA CATEGORIA: Buscar primeiro a página com o mesmo slug da categoria
@@ -360,6 +370,7 @@ async function initPostsFeed() {
                             <div class="api-category-page-content">${pageContent}</div>
                         </section>
                     `;
+                    initBlockInteractivity(categoryPageContainer);
                 }
             } catch (pageErr) {
                 console.warn('Nenhuma página vinculada a esta categoria encontrada:', pageErr);
@@ -455,6 +466,7 @@ async function initSinglePostView() {
                 </div>
             </article>
         `;
+        initBlockInteractivity(container);
     } catch (err) {
         container.innerHTML = render404HTML(`Erro ao carregar post: ${err.message}`);
     }
@@ -499,3 +511,45 @@ function initAuthModal() {
         }
     });
 }
+
+/**
+ * Inicializa a interatividade de blocos do Gutenberg (Sanfonas / Accordions / Details)
+ */
+function initBlockInteractivity(container) {
+    if (!container) return;
+
+    // 1. Suporte a elementos nativos de detalhes/sanfona do Gutenberg (core/details: <details><summary>)
+    const detailsElements = container.querySelectorAll('details.wp-block-details, details');
+    detailsElements.forEach(details => {
+        const summary = details.querySelector('summary');
+        if (summary) {
+            summary.addEventListener('click', () => {
+                setTimeout(() => {
+                    if (details.open) {
+                        details.classList.add('is-open');
+                    } else {
+                        details.classList.remove('is-open');
+                    }
+                }, 50);
+            });
+        }
+    });
+
+    // 2. Suporte a componentes e plugins de Sanfona customizados (.wp-block-accordion, .accordion-header, .accordion-item)
+    const accordionHeaders = container.querySelectorAll('.accordion-header, .wp-block-accordion__header, .accordion-toggle');
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', (e) => {
+            e.preventDefault();
+            const item = header.closest('.accordion-item, .wp-block-accordion, .accordion');
+            if (item) {
+                const isOpen = item.classList.contains('is-open');
+                item.classList.toggle('is-open');
+                const content = item.querySelector('.accordion-content, .wp-block-accordion__content');
+                if (content) {
+                    content.style.display = isOpen ? 'none' : 'block';
+                }
+            }
+        });
+    });
+}
+

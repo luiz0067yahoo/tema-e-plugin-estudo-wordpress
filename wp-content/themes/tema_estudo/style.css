@@ -365,3 +365,197 @@ html, body {
     background: #c83349;
     color: #ffffff;
 }
+
+/* ==========================================================================
+   Estilos de Fidelidade dos Blocos do Gutenberg (WordPress Blocks & Sanfona)
+   ========================================================================== */
+
+/* 1. Bloco de Sanfona / Details (core/details e plugins de sanfona) */
+details.wp-block-details,
+.wp-block-details,
+.wp-block-accordion,
+.accordion-item,
+.api-accordion-block {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+details.wp-block-details:hover,
+.wp-block-accordion:hover,
+.accordion-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+details.wp-block-details[open],
+.accordion-item.is-open {
+    border-color: #e94560;
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.08);
+}
+
+/* Cabeçalho da Sanfona / Summary */
+details.wp-block-details > summary,
+.wp-block-details > summary,
+.accordion-header,
+.wp-block-accordion__header {
+    padding: 1rem 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+details.wp-block-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+details.wp-block-details > summary:hover,
+.accordion-header:hover {
+    background-color: #f1f5f9;
+    color: #e94560;
+}
+
+details.wp-block-details[open] > summary,
+.accordion-item.is-open .accordion-header {
+    background-color: #fff5f7;
+    color: #e94560;
+    border-bottom: 1px solid #fecdd3;
+}
+
+/* Ícone Indicador da Sanfona (+ / - ou seta) */
+details.wp-block-details > summary::after,
+.wp-block-details > summary::after,
+.accordion-header::after {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+    transform: rotate(45deg);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+details.wp-block-details[open] > summary::after,
+.accordion-item.is-open .accordion-header::after {
+    transform: rotate(-135deg);
+    border-color: #e94560;
+}
+
+/* Conteúdo da Sanfona */
+details.wp-block-details .wp-block-details__content,
+details.wp-block-details > *:not(summary),
+.accordion-content,
+.wp-block-accordion__content {
+    padding: 1.25rem;
+    color: #334155;
+    line-height: 1.7;
+    font-size: 1rem;
+    background-color: #ffffff;
+    animation: fadeInAccordion 0.3s ease-in-out;
+}
+
+@keyframes fadeInAccordion {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 2. Suporte aos demais Blocos do Gutenberg (Colunas, Imagens, Tabelas, Citações) */
+.entry-content,
+.api-category-page-content,
+.api-single-content {
+    line-height: 1.7;
+    color: #2d3748;
+}
+
+.wp-block-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.wp-block-column {
+    flex: 1;
+    min-width: 280px;
+}
+
+.wp-block-image img,
+.wp-block-media-text img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.wp-block-quote,
+blockquote {
+    border-left: 4px solid #e94560;
+    margin: 1.5rem 0;
+    padding: 0.75rem 1.25rem;
+    background: #fff5f7;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #4a5568;
+}
+
+.wp-block-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.wp-block-table th,
+.wp-block-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+.wp-block-table th {
+    background-color: #f7fafc;
+    font-weight: 600;
+}
+
+.wp-block-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.wp-block-button__link {
+    background-color: #e94560;
+    color: #ffffff;
+    padding: 0.65rem 1.25rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    transition: background-color 0.2s ease;
+}
+
+.wp-block-button__link:hover {
+    background-color: #c83349;
+    color: #ffffff;
+}
+

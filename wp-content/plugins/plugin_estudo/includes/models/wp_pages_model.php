@@ -37,7 +37,7 @@ class WPPagesModel {
                     'id'                => $p->ID,
                     'name'              => $p->post_title,
                     'slug'              => $p->post_name,
-                    'description'       => $p->post_content,
+                    'description'       => $this->format_content($p->post_content),
                     'short_description' => $p->post_excerpt,
                     'date_created'      => $p->post_date,
                     'author'            => $p->post_author,
@@ -62,7 +62,7 @@ class WPPagesModel {
                     'id'                => $p->ID,
                     'name'              => $p->post_title,
                     'slug'              => $p->post_name,
-                    'description'       => $p->post_content,
+                    'description'       => $this->format_content($p->post_content),
                     'short_description' => $p->post_excerpt,
                     'date_created'      => $p->post_date,
                     'author'            => $p->post_author,
@@ -74,6 +74,16 @@ class WPPagesModel {
         } catch (Exception $erro) {}
         
         return $result;
+    }
+
+    /**
+     * Processa o conteudo do post/pagina executando filtros do WordPress (Gutenberg blocks, shortcodes, etc.)
+     */
+    private function format_content($content) {
+        if (empty($content)) {
+            return '';
+        }
+        return apply_filters('the_content', $content);
     }
 
     public function get_page_thumbnail_src($page_id) {

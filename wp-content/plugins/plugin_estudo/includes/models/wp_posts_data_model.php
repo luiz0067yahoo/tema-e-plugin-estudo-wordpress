@@ -48,7 +48,7 @@ class WPPostsDataModel {
                     'id'                => $post->ID,
                     'name'              => $post->post_title,
                     'slug'              => $post->post_name,
-                    'description'       => $post->post_content,
+                    'description'       => $this->format_content($post->post_content),
                     'short_description' => $post->post_excerpt,
                     'date_created'      => $post->post_date,
                     'author'            => $post->post_author,
@@ -74,7 +74,7 @@ class WPPostsDataModel {
                     'id'                => $post->ID,
                     'name'              => $post->post_title,
                     'slug'              => $post->post_name,
-                    'description'       => $post->post_content,
+                    'description'       => $this->format_content($post->post_content),
                     'short_description' => $post->post_excerpt,
                     'date_created'      => $post->post_date,
                     'author'            => $post->post_author,
@@ -86,6 +86,16 @@ class WPPostsDataModel {
         } catch (Exception $erro) {}
         
         return $result;
+    }
+
+    /**
+     * Processa o conteudo do post executando filtros do WordPress (Gutenberg blocks, shortcodes, etc.)
+     */
+    private function format_content($content) {
+        if (empty($content)) {
+            return '';
+        }
+        return apply_filters('the_content', $content);
     }
         
     public function get_post_images($post_id) {
