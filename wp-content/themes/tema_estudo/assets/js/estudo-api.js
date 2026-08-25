@@ -387,7 +387,7 @@ async function initPostsFeed() {
             const postTitle = post.name || post.post_title || post.title || 'Sem título';
             const thumbUrl = post.thumbnail || post.featured_image || (post.images && post.images.length > 0 ? post.images[0].src : '');
             const rawContent = post.description || post.post_content || '';
-            const excerpt = post.short_description || post.post_excerpt || (rawContent ? rawContent.replace(/<[^>]+>/g, '').substring(0, 110) + '...' : '');
+            const excerpt = post.short_description || post.post_excerpt || (rawContent ? rawContent.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').replace(/<[^>]+>/g, '').substring(0, 110) + '...' : '');
             const contentToDisplay = isSinglePost ? rawContent : excerpt;
             const rawDate = post.date_created || post.post_date;
             const dateFormatted = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : 'N/A';
