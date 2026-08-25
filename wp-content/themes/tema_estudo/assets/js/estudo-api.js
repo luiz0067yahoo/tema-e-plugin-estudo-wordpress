@@ -421,6 +421,8 @@ async function initPostsFeed() {
             `;
         }).join('');
 
+        initBlockInteractivity(postsContainer);
+
     } catch (err) {
         postsContainer.innerHTML = render404HTML(`Não foi possível carregar o conteúdo via REST API. (${err.message})`);
     }
@@ -515,41 +517,73 @@ function initAuthModal() {
 /**
  * Inicializa a interatividade de blocos do Gutenberg (Sanfonas / Accordions / Details)
  */
-function initBlockInteractivity(container) {
+function initBlockInteractivity(container = document) {
     if (!container) return;
 
-    // 1. Suporte a elementos nativos de detalhes/sanfona do Gutenberg (core/details: <details><summary>)
-    const detailsElements = container.querySelectorAll('details.wp-block-details, details');
+    // 1. Suporte a elementos nativos de detalhes/sanfona do Gutenberg (<details><summary>)
+    const detailsElements = container.querySelectorAll('details, .wp-block-details');
     detailsElements.forEach(details => {
-        const summary = details.querySelector('summary');
-        if (summary) {
-            summary.addEventListener('click', () => {
-                setTimeout(() => {
-                    if (details.open) {
-                        details.classList.add('is-open');
-                    } else {
-                        details.classList.remove('is-open');
-                    }
-                }, 50);
-            });
+        // Sincroniza a classe 'is-open' com base no estado do atributo 'open'
+        if (details.open || details.hasAttribute('open')) {
+            details.classList.add('is-open');
+        } else {
+            details.classList.remove('is-open');
         }
+
+        const summary = details.querySelector('summary, .wp-block-details__summary');
+        if (summary) {
+            summary.style.cursor = 'pointer';
+            summary.removeEventListener('click', handleSummaryClick);
+            summary.addEventListener('click', handleSummaryClick);
+        }
+
+        details.removeEventListener('toggle', handleDetailsToggle);
+        details.addEventListener('toggle', handleDetailsToggle);
     });
 
-    // 2. Suporte a componentes e plugins de Sanfona customizados (.wp-block-accordion, .accordion-header, .accordion-item)
-    const accordionHeaders = container.querySelectorAll('.accordion-header, .wp-block-accordion__header, .accordion-toggle');
+    // 2. Suporte a componentes e plugins de Sanfona customizados (.wp-block-accordion, .accordion-header, .accordion-item, .su-spoiler)
+    const accordionHeaders = container.querySelectorAll('.accordion-header, .wp-block-accordion__header, .accordion-toggle, .su-spoiler-title, .faq-header');
     accordionHeaders.forEach(header => {
-        header.addEventListener('click', (e) => {
-            e.preventDefault();
-            const item = header.closest('.accordion-item, .wp-block-accordion, .accordion');
-            if (item) {
-                const isOpen = item.classList.contains('is-open');
-                item.classList.toggle('is-open');
-                const content = item.querySelector('.accordion-content, .wp-block-accordion__content');
-                if (content) {
-                    content.style.display = isOpen ? 'none' : 'block';
-                }
-            }
-        });
+        header.style.cursor = 'pointer';
+        header.removeEventListener('click', handleAccordionHeaderClick);
+        header.addEventListener('click', handleAccordionHeaderClick);
     });
+}
+
+function handleSummaryClick(e) {
+    const summary = e.currentTarget;
+    const details = summary.closest('details, .wp-block-details');
+    if (details) {
+        setTimeout(() => {
+            if (details.open || details.hasAttribute('open')) {
+                details.classList.add('is-open');
+            } else {
+                details.classList.remove('is-open');
+            }
+        }, 40);
+    }
+}
+
+function handleDetailsToggle(e) {
+    const details = e.currentTarget;
+    if (details.open || details.hasAttribute('open')) {
+        details.classList.add('is-open');
+    } else {
+        details.classList.remove('is-open');
+    }
+}
+
+function handleAccordionHeaderClick(e) {
+    e.preventDefault();
+    const header = e.currentTarget;
+    const parent = header.closest('.accordion-item, .wp-block-accordion, .accordion, .su-spoiler, .faq-item');
+    if (parent) {
+        const isOpen = parent.classList.contains('is-open');
+        parent.classList.toggle('is-open');
+        const content = parent.querySelector('.accordion-content, .wp-block-accordion__content, .su-spoiler-content, .faq-answer');
+        if (content) {
+            content.style.display = isOpen ? 'none' : 'block';
+        }
+    }
 }
 

@@ -372,6 +372,7 @@ html, body {
 
 /* 1. Bloco de Sanfona / Details (core/details e plugins de sanfona) */
 details.wp-block-details,
+details,
 .wp-block-details,
 .wp-block-accordion,
 .accordion-item,
@@ -382,26 +383,31 @@ details.wp-block-details,
     margin-bottom: 1rem;
     overflow: hidden;
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    display: block;
 }
 
-details.wp-block-details:hover,
+details:hover,
 .wp-block-accordion:hover,
 .accordion-item:hover {
     border-color: #cbd5e1;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-details.wp-block-details[open],
-.accordion-item.is-open {
+details[open],
+details.is-open,
+.accordion-item.is-open,
+.wp-block-accordion.is-open {
     border-color: #e94560;
     box-shadow: 0 4px 12px rgba(233, 69, 96, 0.08);
 }
 
 /* Cabeçalho da Sanfona / Summary */
-details.wp-block-details > summary,
+details > summary,
 .wp-block-details > summary,
 .accordion-header,
-.wp-block-accordion__header {
+.wp-block-accordion__header,
+.su-spoiler-title,
+.faq-header {
     padding: 1rem 1.25rem;
     font-size: 1.05rem;
     font-weight: 600;
@@ -417,27 +423,31 @@ details.wp-block-details > summary,
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-details.wp-block-details > summary::-webkit-details-marker {
+details > summary::-webkit-details-marker {
     display: none;
 }
 
-details.wp-block-details > summary:hover,
-.accordion-header:hover {
+details > summary:hover,
+.accordion-header:hover,
+.wp-block-accordion__header:hover {
     background-color: #f1f5f9;
     color: #e94560;
 }
 
-details.wp-block-details[open] > summary,
-.accordion-item.is-open .accordion-header {
+details[open] > summary,
+details.is-open > summary,
+.accordion-item.is-open .accordion-header,
+.wp-block-accordion.is-open .wp-block-accordion__header {
     background-color: #fff5f7;
     color: #e94560;
     border-bottom: 1px solid #fecdd3;
 }
 
 /* Ícone Indicador da Sanfona (+ / - ou seta) */
-details.wp-block-details > summary::after,
+details > summary::after,
 .wp-block-details > summary::after,
-.accordion-header::after {
+.accordion-header::after,
+.wp-block-accordion__header::after {
     content: '';
     display: inline-block;
     width: 10px;
@@ -450,17 +460,42 @@ details.wp-block-details > summary::after,
     flex-shrink: 0;
 }
 
-details.wp-block-details[open] > summary::after,
-.accordion-item.is-open .accordion-header::after {
+details[open] > summary::after,
+details.is-open > summary::after,
+.accordion-item.is-open .accordion-header::after,
+.wp-block-accordion.is-open .wp-block-accordion__header::after {
     transform: rotate(-135deg);
     border-color: #e94560;
 }
 
-/* Conteúdo da Sanfona */
-details.wp-block-details .wp-block-details__content,
-details.wp-block-details > *:not(summary),
-.accordion-content,
-.wp-block-accordion__content {
+/* Regras Estritas de Ocultamento e Exibição do Conteúdo da Sanfona */
+details:not([open]) > *:not(summary) {
+    display: none !important;
+}
+
+details[open] > *:not(summary),
+details.is-open > *:not(summary) {
+    display: block !important;
+    padding: 1.25rem;
+    color: #334155;
+    line-height: 1.7;
+    font-size: 1rem;
+    background-color: #ffffff;
+    animation: fadeInAccordion 0.3s ease-in-out;
+}
+
+.accordion-item:not(.is-open) .accordion-content,
+.wp-block-accordion:not(.is-open) .wp-block-accordion__content,
+.su-spoiler:not(.is-open) .su-spoiler-content,
+.faq-item:not(.is-open) .faq-answer {
+    display: none !important;
+}
+
+.accordion-item.is-open .accordion-content,
+.wp-block-accordion.is-open .wp-block-accordion__content,
+.su-spoiler.is-open .su-spoiler-content,
+.faq-item.is-open .faq-answer {
+    display: block !important;
     padding: 1.25rem;
     color: #334155;
     line-height: 1.7;
