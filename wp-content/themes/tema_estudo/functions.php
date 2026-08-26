@@ -121,18 +121,26 @@ function tema_estudo_redirect_home_to_first_category() {
 		return;
 	}
 
-	$request_uri = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
+	$home_path = trim( parse_url( home_url(), PHP_URL_PATH ) ?? '', '/' );
+	$request_path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
 
-	// Verifica se a requisição é para a página inicial (raiz / ou /home)
-	if ( is_front_page() || is_home() || $request_uri === 'home' || $request_uri === '' ) {
+	if ( $home_path && strpos( $request_path, $home_path ) === 0 ) {
+		$relative_path = trim( substr( $request_path, strlen( $home_path ) ), '/' );
+	} else {
+		$relative_path = $request_path;
+	}
+
+	// Redireciona APENAS se a requisição for estritamente para a raiz '/' ou '/home'
+	if ( $relative_path === '' || $relative_path === 'home' ) {
 		$first_category_slug = tema_estudo_get_first_category_slug();
 
-		if ( $first_category_slug && $request_uri !== $first_category_slug ) {
+		if ( $first_category_slug && $relative_path !== $first_category_slug ) {
 			wp_redirect( home_url( '/' . $first_category_slug ), 302 );
 			exit;
 		}
 	}
 }
 add_action( 'template_redirect', 'tema_estudo_redirect_home_to_first_category' );
+
 
 

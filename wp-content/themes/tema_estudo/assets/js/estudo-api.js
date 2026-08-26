@@ -222,22 +222,27 @@ async function initSiteSettings() {
  */
 function getCurrentCategoryFromURL(categories = []) {
     const urlParams = new URLSearchParams(window.location.search);
-    const catQuery = urlParams.get('category');
+    const catQuery = urlParams.get('category') || urlParams.get('category_name') || urlParams.get('cat');
     if (catQuery) {
         // If numeric ID, try finding category by ID
         if (!isNaN(catQuery)) {
             const match = categories.find(c => String(c.id || c.term_id) === String(catQuery));
             if (match) return match.slug;
         }
+        const match = categories.find(c => c.slug === catQuery);
+        if (match) return match.slug;
         return catQuery;
     }
 
     // Check path (e.g. /minhacategoria or /category/minhacategoria)
     const pathSegments = window.location.pathname.split('/').filter(p => p && p !== 'index.php');
     if (pathSegments.length > 0) {
-        const lastSegment = pathSegments[pathSegments.length - 1];
-        const match = categories.find(c => c.slug === lastSegment);
-        if (match) return match.slug;
+        // Procura da direita para a esquerda nos segmentos da URL
+        for (let i = pathSegments.length - 1; i >= 0; i--) {
+            const seg = pathSegments[i];
+            const match = categories.find(c => c.slug === seg);
+            if (match) return match.slug;
+        }
     }
 
     return null;
@@ -260,6 +265,8 @@ async function initCategoriesList() {
         }
 
         const currentCatSlug = getCurrentCategoryFromURL(categories);
+        const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
+        const cleanHomeUrl = homeUrl.endsWith('/') ? homeUrl : homeUrl + '/';
 
         // Render Header Main Navigation Menu: Cada Categoria como um item de Menu NAV (ul/li)
         if (headerNav) {
@@ -268,9 +275,10 @@ async function initCategoriesList() {
                     ${categories.map(cat => {
                 const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
                 const isActive = currentCatSlug === slug;
+                const catUrl = cleanHomeUrl + slug;
                 return `
                             <li class="nav-item-wrap">
-                                <a href="/${slug}" class="nav-item ${isActive ? 'active' : ''}">${cat.name}</a>
+                                <a href="${catUrl}" class="nav-item ${isActive ? 'active' : ''}">${cat.name}</a>
                             </li>
                         `;
             }).join('')}
@@ -282,10 +290,11 @@ async function initCategoriesList() {
         if (sidebarNav) {
             sidebarNav.innerHTML = `
                 <ul class="api-cat-list">
-                    <li><a href="/">Todas as Categorias</a></li>
+                    <li><a href="${cleanHomeUrl}">Todas as Categorias</a></li>
                     ${categories.map(cat => {
                 const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
-                return `<li><a href="/${slug}">${cat.name} (${cat.count || 0})</a></li>`;
+                const catUrl = cleanHomeUrl + slug;
+                return `<li><a href="${catUrl}">${cat.name} (${cat.count || 0})</a></li>`;
             }).join('')}
                 </ul>
             `;
@@ -296,6 +305,7 @@ async function initCategoriesList() {
 }
 
 function render404HTML(customMessage = 'Desculpe, a página ou conteúdo solicitado não foi encontrado ou não existe no sistema.') {
+    const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
     return `
         <div class="api-404-container">
             <div class="api-404-card">
@@ -303,7 +313,7 @@ function render404HTML(customMessage = 'Desculpe, a página ou conteúdo solicit
                 <h2 class="api-404-title">Conteúdo Não Encontrado</h2>
                 <p class="api-404-message">${customMessage}</p>
                 <div class="api-404-actions">
-                    <a href="/" class="api-button-404">&larr; Voltar para a Página Inicial</a>
+                    <a href="${homeUrl}" class="api-button-404">&larr; Voltar para a Página Inicial</a>
                 </div>
             </div>
         </div>
@@ -337,9 +347,20 @@ async function initPostsFeed() {
         // Se não houver slug na URL e estiver na raiz / ou /home, redireciona para a primeira categoria cadastrada
         if (!currentCatSlug && categories.length > 0) {
             const firstCat = categories.find(c => c.slug && c.slug !== 'uncategorized' && c.name !== 'Sem categoria') || categories[0];
-            if (firstCat && firstCat.slug && (window.location.pathname === '/' || window.location.pathname === '/home' || window.location.pathname === '/home/')) {
-                window.location.href = '/' + firstCat.slug;
-                return;
+            if (firstCat && firstCat.slug) {
+                const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
+                const cleanHomeUrl = homeUrl.endsWith('/') ? homeUrl : homeUrl + '/';
+                const targetUrl = cleanHomeUrl + firstCat.slug;
+                
+                const pathSegments = window.location.pathname.split('/').filter(p => p && p !== 'index.php');
+                const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : '';
+
+                if (lastSegment === '' || lastSegment === 'home' || window.location.pathname === '/' || window.location.pathname === '/home' || window.location.pathname === '/home/') {
+                    if (window.location.href !== targetUrl && lastSegment !== firstCat.slug) {
+                        window.location.href = targetUrl;
+                        return;
+                    }
+                }
             }
         }
 
