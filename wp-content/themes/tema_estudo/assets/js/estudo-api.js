@@ -351,7 +351,7 @@ async function initPostsFeed() {
                 const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
                 const cleanHomeUrl = homeUrl.endsWith('/') ? homeUrl : homeUrl + '/';
                 const targetUrl = cleanHomeUrl + firstCat.slug;
-                
+
                 const pathSegments = window.location.pathname.split('/').filter(p => p && p !== 'index.php');
                 const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : '';
 
@@ -427,7 +427,7 @@ async function initPostsFeed() {
             return `
                 <article class="api-post-card">
                     <div>
-                        ${thumbUrl ? `<img src="${thumbUrl}" class="api-post-thumb" alt="${postTitle}" />` : ''}
+                        ${(thumbUrl && !isSinglePost) ? `<img src="${thumbUrl}" class="api-post-thumb" alt="${postTitle}" />` : ''}
                         <h3 class="api-post-title">
                             <a href="?post_id=${postId}">${postTitle}</a>
                         </h3>
@@ -557,7 +557,7 @@ function initBlockInteractivity(container = document) {
         const isOpen = item.classList.contains('is-open');
         const trigger = item.querySelector('summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, button');
         const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer')
-                     || Array.from(item.children).find(child => child !== trigger && (!trigger || !child.contains(trigger)));
+            || Array.from(item.children).find(child => child !== trigger && (!trigger || !child.contains(trigger)));
 
         if (content && content !== trigger) {
             content.style.display = isOpen ? 'block' : 'none';
@@ -568,7 +568,7 @@ function initBlockInteractivity(container = document) {
 /**
  * Delegador de Eventos Global de Clique para Sanfonas
  */
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     // Procura por botões, summaries ou títulos H1-H6 de sanfona clicados
     const trigger = e.target.closest('summary, .wp-block-details__summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, .su-spoiler-title, .faq-header, details summary, .accordion-item > button, details button, .wp-block-details button, [data-toggle="accordion"], h1, h2, h3, h4, h5, h6');
 
@@ -604,7 +604,7 @@ document.addEventListener('click', function(e) {
         }
 
         const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer, .wp-block-details__content')
-                     || Array.from(item.children).find(child => child !== trigger && !child.contains(trigger));
+            || Array.from(item.children).find(child => child !== trigger && !child.contains(trigger));
 
         if (content && content !== trigger) {
             content.style.display = isOpen ? 'none' : 'block';
