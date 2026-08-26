@@ -136,6 +136,26 @@ class EstudoAPIClient {
         return [];
     }
 
+    // List Products
+    async getProducts(params = {}) {
+        const queryParams = new URLSearchParams(params).toString();
+        const endpoint = `products${queryParams ? `?${queryParams}` : ''}`;
+        try {
+            return await this.request(endpoint, { method: 'GET' });
+        } catch (e) {
+            return await this.request(`posts?type=product${queryParams ? `&${queryParams}` : ''}`, { method: 'GET' });
+        }
+    }
+
+    // Get Product by ID
+    async getProductById(id) {
+        try {
+            return await this.request(`products/${id}`, { method: 'GET' });
+        } catch (e) {
+            return await this.request(`posts/${id}?type=product`, { method: 'GET' });
+        }
+    }
+
     // Get Settings
     async getSettings() {
         return await this.request('settings', { method: 'GET' });
@@ -249,6 +269,52 @@ function getCurrentCategoryFromURL(categories = []) {
 }
 
 /**
+ * Helper para extrair dinamicamente a Categoria e o Slug do Post/Produto a partir da URL amigável
+ */
+function getRouteParamsFromURL(categories = []) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('post_id') || urlParams.get('id');
+    const productId = urlParams.get('product_id');
+
+    const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
+    let homePath = '/';
+    try {
+        homePath = new URL(homeUrl, window.location.origin).pathname;
+    } catch (e) {
+        homePath = '/';
+    }
+
+    const rawPath = window.location.pathname;
+    let relativePath = rawPath;
+    if (homePath && homePath !== '/' && relativePath.startsWith(homePath)) {
+        relativePath = relativePath.substring(homePath.length);
+    }
+
+    const segments = relativePath.split('/').filter(s => s && s !== 'index.php');
+
+    let categorySlug = null;
+    let itemSlug = null;
+
+    if (segments.length === 1) {
+        categorySlug = segments[0];
+    } else if (segments.length >= 2) {
+        categorySlug = segments[0];
+        itemSlug = segments[1];
+    }
+
+    if (!categorySlug && categories.length > 0) {
+        categorySlug = getCurrentCategoryFromURL(categories);
+    }
+
+    return {
+        categorySlug,
+        itemSlug,
+        postId,
+        productId
+    };
+}
+
+/**
  * Load Categories List and render in Main Header Navigation & Sidebar
  */
 async function initCategoriesList() {
@@ -312,9 +378,6 @@ function render404HTML(customMessage = 'Desculpe, a página ou conteúdo solicit
                 <h1 class="api-404-code">404</h1>
                 <h2 class="api-404-title">Conteúdo Não Encontrado</h2>
                 <p class="api-404-message">${customMessage}</p>
-                <div class="api-404-actions">
-                    <a href="${homeUrl}" class="api-button-404">&larr; Voltar para a Página Inicial</a>
-                </div>
             </div>
         </div>
     `;
@@ -340,6 +403,12 @@ async function initPostsFeed() {
             categories = Array.isArray(catRes) ? catRes : (catRes && Array.isArray(catRes.data) ? catRes.data : []);
         } catch (e) {
             categories = [];
+        }
+
+        const routeParams = getRouteParamsFromURL(categories);
+        if (routeParams.itemSlug || routeParams.postId || routeParams.productId) {
+            if (categoryPageContainer) categoryPageContainer.innerHTML = '';
+            return;
         }
 
         let currentCatSlug = getCurrentCategoryFromURL(categories);
@@ -413,10 +482,14 @@ async function initPostsFeed() {
         }
 
         const isSinglePost = posts.length === 1;
+        const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
+        const cleanHomeUrl = homeUrl.endsWith('/') ? homeUrl : homeUrl + '/';
+        const catSlugForUrl = currentCatSlug || 'home';
 
         postsContainer.innerHTML = posts.map(post => {
             const postId = post.id || post.ID;
             const postTitle = post.name || post.post_title || post.title || 'Sem título';
+            const postSlug = post.slug || post.post_name || postId;
             const thumbUrl = post.thumbnail || post.featured_image || (post.images && post.images.length > 0 ? post.images[0].src : '');
             const rawContent = post.description || post.post_content || '';
             const excerpt = post.short_description || post.post_excerpt || (rawContent ? rawContent.replace(/<BR>/g, ' ').replace(/<br>/g, ' ').replace(/<[^>]+>/g, '').substring(0, 110) + '...' : '');
@@ -424,12 +497,14 @@ async function initPostsFeed() {
             const rawDate = post.date_created || post.post_date;
             const dateFormatted = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : 'N/A';
 
+            const targetUrl = `${cleanHomeUrl}${catSlugForUrl}/${postSlug}`;
+
             return `
                 <article class="api-post-card">
                     <div>
-                        ${(thumbUrl && !isSinglePost) ? `<img src="${thumbUrl}" class="api-post-thumb" alt="${postTitle}" />` : ''}
+                        ${(thumbUrl && !isSinglePost) ? `<a href="${targetUrl}"><img src="${thumbUrl}" class="api-post-thumb" alt="${postTitle}" /></a>` : ''}
                         <h3 class="api-post-title">
-                            <a href="?post_id=${postId}">${postTitle}</a>
+                            <a href="${targetUrl}">${postTitle}</a>
                         </h3>
                     </div>
                     <div>
@@ -477,15 +552,11 @@ async function initSinglePostView() {
         container.innerHTML = `
             <article class="api-single-article">
                 <h1 class="api-single-title">${post.post_title || post.title || post.name || 'Sem título'}</h1>
-                <div class="api-single-meta">
-                    Publicado em: ${post.post_date || post.date_created ? new Date(post.post_date || post.date_created).toLocaleDateString('pt-BR') : 'N/A'}
-                </div>
-                ${post.featured_image || post.thumbnail ? `<img src="${post.featured_image || post.thumbnail}" class="api-single-thumb" alt="" />` : ''}
                 <div class="api-single-content">
                     ${post.post_content || post.description || post.content || ''}
                 </div>
-                <div class="api-back-link">
-                    <a href="javascript:history.back()">&larr; Voltar para a lista</a>
+                <div class="api-single-meta">
+                    Publicado em: ${post.post_date || post.date_created ? new Date(post.post_date || post.date_created).toLocaleDateString('pt-BR') : 'N/A'}
                 </div>
             </article>
         `;
@@ -536,79 +607,193 @@ function initAuthModal() {
 }
 
 /**
- * Inicializa a interatividade de blocos do Gutenberg e Sanfonas (Accordions Nativos & Plugins)
+ * =====================================================================
+ * MOTOR DE ACCORDION / SANFONA — GUTENBERG & PLUGINS
+ * Suporta:
+ *   • Gutenberg Core   → <details> / <summary> / .wp-block-details
+ *   • UAGB FAQ         → .uagb-faq-child__outer-wrap / .uagb-faq-questions-button
+ *   • UAGB Accordion   → .uagb-accordion-child__outer-wrap / .uagb-accordion-header
+ *   • Kadence          → .kt-accordion-pane / .kt-blocks-accordion-header
+ *   • Shortcodes Ult.  → .su-spoiler / .su-spoiler-title
+ *   • Generic / API    → .accordion-item / .accordion-header
+ *   • Custom API       → .api-accordion-block
+ * =====================================================================
+ */
+
+/** Seletores de CONTAINER de accordion (o item pai) */
+const ACCORDION_ITEM_SEL = [
+    'details',
+    '.wp-block-details',
+    '.accordion-item',
+    '.wp-block-accordion',
+    '.uagb-faq-child__outer-wrap',
+    '.uagb-faq-item',
+    '.uagb-accordion-child__outer-wrap',
+    '.kt-accordion-pane',
+    '.su-spoiler',
+    '.faq-item',
+    '.api-accordion-block',
+].join(', ');
+
+/** Seletores de GATILHO (cabeçalho clicável) */
+const ACCORDION_TRIGGER_SEL = [
+    'summary',
+    '.wp-block-details__summary',
+    '.accordion-header',
+    '.wp-block-accordion__header',
+    '.uagb-faq-questions-button',
+    '.uagb-accordion-header',
+    '.kt-blocks-accordion-header',
+    '.su-spoiler-title',
+    '.faq-header',
+    '[data-toggle="accordion"]',
+].join(', ');
+
+/** Seletores de CONTEÚDO (painel que abre/fecha) */
+const ACCORDION_CONTENT_SEL = [
+    '.wp-block-details__content',
+    '.accordion-content',
+    '.wp-block-accordion__content',
+    '.uagb-faq-content',
+    '.uagb-faq-body',
+    '.uagb-accordion-content',
+    '.kt-accordion-panel',
+    '.su-spoiler-content',
+    '.faq-answer',
+    '.api-accordion-content',
+].join(', ');
+
+/**
+ * Abre ou fecha um item de accordion individualmente.
+ * @param {Element} item   - Elemento container do accordion
+ * @param {boolean} force  - true = abrir, false = fechar, undefined = toggle
+ */
+function toggleAccordionItem(item, force) {
+    const isNativeDetails = item.tagName.toLowerCase() === 'details';
+    const isCurrentlyOpen = isNativeDetails
+        ? item.open
+        : item.classList.contains('is-open');
+
+    const shouldOpen = force !== undefined ? force : !isCurrentlyOpen;
+
+    if (isNativeDetails) {
+        // Deixa o browser gerenciar <details> nativamente; apenas sincroniza a classe
+        if (shouldOpen) {
+            item.setAttribute('open', '');
+            item.classList.add('is-open');
+        } else {
+            item.removeAttribute('open');
+            item.classList.remove('is-open');
+        }
+    } else {
+        // Accordion baseado em div/button
+        const content = item.querySelector(ACCORDION_CONTENT_SEL)
+            || Array.from(item.children).find(c => !c.matches(ACCORDION_TRIGGER_SEL));
+
+        if (shouldOpen) {
+            item.classList.add('is-open');
+            item.setAttribute('aria-expanded', 'true');
+            if (content) {
+                content.style.display = 'block';
+                content.setAttribute('aria-hidden', 'false');
+            }
+        } else {
+            item.classList.remove('is-open');
+            item.setAttribute('aria-expanded', 'false');
+            if (content) {
+                content.style.display = 'none';
+                content.setAttribute('aria-hidden', 'true');
+            }
+        }
+    }
+}
+
+/**
+ * Inicializa todos os accordions dentro de um container após injeção dinâmica de HTML.
+ * @param {Element|Document} container
  */
 function initBlockInteractivity(container = document) {
     if (!container) return;
 
-    // 1. Sincroniza estado inicial dos elementos <details> nativos ou .wp-block-details
-    const detailsElements = container.querySelectorAll('details, .wp-block-details');
-    detailsElements.forEach(details => {
-        if (details.hasAttribute('open') || details.open) {
-            details.classList.add('is-open');
-        } else {
-            details.classList.remove('is-open');
+    const items = container.querySelectorAll(ACCORDION_ITEM_SEL);
+
+    items.forEach(item => {
+        const isNativeDetails = item.tagName.toLowerCase() === 'details';
+
+        if (isNativeDetails) {
+            // Sincroniza classe com estado nativo do atributo [open]
+            if (item.open || item.hasAttribute('open')) {
+                item.classList.add('is-open');
+            } else {
+                item.classList.remove('is-open');
+            }
+            return;
         }
-    });
 
-    // 2. Sincroniza estado inicial de sanfonas baseadas em divs/buttons (Gutenberg & Plugins)
-    const accordionItems = container.querySelectorAll('.accordion-item, .wp-block-accordion, .uagb-faq-item, .uagb-faq-child__outer-wrap, .uagb-accordion-child__outer-wrap, .kt-accordion-pane, .su-spoiler, .faq-item, .api-accordion-block');
-    accordionItems.forEach(item => {
+        // Accordion baseado em div: define estado inicial via classe .is-open
         const isOpen = item.classList.contains('is-open');
-        const trigger = item.querySelector('summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, button');
-        const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer')
-            || Array.from(item.children).find(child => child !== trigger && (!trigger || !child.contains(trigger)));
+        const content = item.querySelector(ACCORDION_CONTENT_SEL)
+            || Array.from(item.children).find(c => !c.matches(ACCORDION_TRIGGER_SEL));
 
-        if (content && content !== trigger) {
+        // Define atributos de acessibilidade
+        const trigger = item.querySelector(ACCORDION_TRIGGER_SEL);
+        if (trigger) {
+            trigger.setAttribute('role', 'button');
+            trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (!trigger.hasAttribute('tabindex')) trigger.setAttribute('tabindex', '0');
+        }
+
+        if (content) {
             content.style.display = isOpen ? 'block' : 'none';
+            content.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
         }
     });
 }
 
 /**
- * Delegador de Eventos Global de Clique para Sanfonas
+ * Delegador Global de Cliques — captura cliques em qualquer accordion da página,
+ * incluindo conteúdo injetado dinamicamente via API.
  */
 document.addEventListener('click', function (e) {
-    // Procura por botões, summaries ou títulos H1-H6 de sanfona clicados
-    const trigger = e.target.closest('summary, .wp-block-details__summary, .accordion-header, .wp-block-accordion__header, .uagb-faq-questions-button, .uagb-accordion-header, .kt-blocks-accordion-header, .su-spoiler-title, .faq-header, details summary, .accordion-item > button, details button, .wp-block-details button, [data-toggle="accordion"], h1, h2, h3, h4, h5, h6');
-
+    const trigger = e.target.closest(ACCORDION_TRIGGER_SEL);
     if (!trigger) return;
 
-    const details = trigger.closest('details, .wp-block-details');
-    const accordionItem = trigger.closest('.accordion-item, .wp-block-accordion, .uagb-faq-item, .uagb-faq-child__outer-wrap, .uagb-accordion-child__outer-wrap, .kt-accordion-pane, .su-spoiler, .faq-item, .api-accordion-block');
+    const item = trigger.closest(ACCORDION_ITEM_SEL);
+    if (!item) return;
 
-    // 1. Tratamento para tags <details> (Gutenberg Core Details)
-    if (details && details.tagName.toLowerCase() === 'details') {
+    const isNativeDetails = item.tagName.toLowerCase() === 'details';
+
+    if (isNativeDetails) {
+        // Aguarda o browser processar a mudança de estado e então sincroniza a classe
         setTimeout(() => {
-            if (details.open || details.hasAttribute('open')) {
-                details.classList.add('is-open');
-            } else {
-                details.classList.remove('is-open');
-            }
-        }, 15);
-        return;
+            item.classList.toggle('is-open', item.open);
+        }, 10);
+        return; // Não previne o comportamento padrão do <details>
     }
 
-    // 2. Tratamento para Sanfonas baseadas em div/button (Plugins / Custom)
-    if (details || accordionItem) {
-        const item = details || accordionItem;
-        e.preventDefault();
-        const isOpen = item.classList.contains('is-open') || item.hasAttribute('open');
+    // Para accordions baseados em div/button: previne navegação indesejada
+    e.preventDefault();
 
-        if (isOpen) {
-            item.classList.remove('is-open');
-            item.removeAttribute('open');
-        } else {
-            item.classList.add('is-open');
-            item.setAttribute('open', 'true');
-        }
-
-        const content = item.querySelector('.accordion-content, .wp-block-accordion__content, .uagb-faq-content, .uagb-accordion-content, .kt-accordion-panel, .su-spoiler-content, .faq-answer, .wp-block-details__content')
-            || Array.from(item.children).find(child => child !== trigger && !child.contains(trigger));
-
-        if (content && content !== trigger) {
-            content.style.display = isOpen ? 'none' : 'block';
-        }
-    }
+    toggleAccordionItem(item);
 });
+
+/**
+ * Suporte a teclado: Enter/Espaço nos triggers de accordion div/button.
+ */
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const trigger = e.target.closest(ACCORDION_TRIGGER_SEL);
+    if (!trigger) return;
+    const item = trigger.closest(ACCORDION_ITEM_SEL);
+    if (!item || item.tagName.toLowerCase() === 'details') return;
+    e.preventDefault();
+    toggleAccordionItem(item);
+});
+
+// Exporta utilitários globais para scripts individuais
+window.render404HTML = render404HTML;
+window.initBlockInteractivity = initBlockInteractivity;
+window.getCurrentCategoryFromURL = getCurrentCategoryFromURL;
+window.getRouteParamsFromURL = getRouteParamsFromURL;
+
 

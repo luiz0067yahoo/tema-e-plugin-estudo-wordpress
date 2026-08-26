@@ -370,17 +370,22 @@ html, body {
    Estilos de Fidelidade dos Blocos do Gutenberg (WordPress Blocks & Sanfona)
    ========================================================================== */
 
-/* 1. Bloco de Sanfona / Details (core/details e plugins de sanfona) */
-details.wp-block-details,
+/* 1. Bloco de Sanfona / Details — Gutenberg Core + Plugins */
 details,
 .wp-block-details,
 .wp-block-accordion,
 .accordion-item,
+.uagb-faq-child__outer-wrap,
+.uagb-faq-item,
+.uagb-accordion-child__outer-wrap,
+.kt-accordion-pane,
+.su-spoiler,
+.faq-item,
 .api-accordion-block {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     overflow: hidden;
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
     display: block;
@@ -388,7 +393,10 @@ details,
 
 details:hover,
 .wp-block-accordion:hover,
-.accordion-item:hover {
+.accordion-item:hover,
+.uagb-faq-child__outer-wrap:hover,
+.kt-accordion-pane:hover,
+.su-spoiler:hover {
     border-color: #cbd5e1;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
@@ -396,7 +404,12 @@ details:hover,
 details[open],
 details.is-open,
 .accordion-item.is-open,
-.wp-block-accordion.is-open {
+.wp-block-accordion.is-open,
+.uagb-faq-child__outer-wrap.is-open,
+.uagb-accordion-child__outer-wrap.is-open,
+.kt-accordion-pane.is-open,
+.su-spoiler.is-open,
+.faq-item.is-open {
     border-color: #e94560;
     box-shadow: 0 4px 12px rgba(233, 69, 96, 0.08);
 }
@@ -427,7 +440,7 @@ details button,
     justify-content: space-between !important;
 }
 
-/* Cabeçalho da Sanfona / Summary */
+/* Cabeçalho da Sanfona / Summary — todos os tipos */
 details > summary,
 .wp-block-details > summary,
 .accordion-header,
@@ -436,11 +449,12 @@ details > summary,
 .uagb-accordion-header,
 .kt-blocks-accordion-header,
 .su-spoiler-title,
-.faq-header {
+.faq-header,
+[data-toggle="accordion"] {
     width: 100%;
     box-sizing: border-box;
     padding: 1rem 1.25rem;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #1e293b;
     cursor: pointer;
@@ -453,6 +467,8 @@ details > summary,
     background-color: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     transition: background-color 0.2s ease, color 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 details > summary::-webkit-details-marker {
@@ -462,7 +478,12 @@ details > summary::-webkit-details-marker {
 details > summary:hover,
 .accordion-header:hover,
 .wp-block-accordion__header:hover,
-.uagb-faq-questions-button:hover {
+.uagb-faq-questions-button:hover,
+.uagb-accordion-header:hover,
+.kt-blocks-accordion-header:hover,
+.su-spoiler-title:hover,
+.faq-header:hover,
+[data-toggle="accordion"]:hover {
     background-color: #f1f5f9;
     color: #e94560;
 }
@@ -471,27 +492,37 @@ details[open] > summary,
 details.is-open > summary,
 .accordion-item.is-open .accordion-header,
 .wp-block-accordion.is-open .wp-block-accordion__header,
-.uagb-faq-item.is-open .uagb-faq-questions-button {
+.uagb-faq-child__outer-wrap.is-open .uagb-faq-questions-button,
+.uagb-accordion-child__outer-wrap.is-open .uagb-accordion-header,
+.kt-accordion-pane.is-open .kt-blocks-accordion-header,
+.su-spoiler.is-open .su-spoiler-title,
+.faq-item.is-open .faq-header {
     background-color: #fff5f7;
     color: #e94560;
     border-bottom: 1px solid #fecdd3;
 }
 
-/* Ícone Indicador da Sanfona (+ / - ou seta) */
+/* Ícone indicador (seta chevron) — todos os cabeçalhos */
 details > summary::after,
 .wp-block-details > summary::after,
 .accordion-header::after,
 .wp-block-accordion__header::after,
-.uagb-faq-questions-button::after {
+.uagb-faq-questions-button::after,
+.uagb-accordion-header::after,
+.kt-blocks-accordion-header::after,
+.su-spoiler-title::after,
+.faq-header::after,
+[data-toggle="accordion"]::after {
     content: '';
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-right: 2px solid #64748b;
     border-bottom: 2px solid #64748b;
     transform: rotate(45deg);
     transition: transform 0.3s ease, border-color 0.3s ease;
-    margin-left: 1rem;
+    margin-left: auto;
+    padding-left: 1rem;
     flex-shrink: 0;
 }
 
@@ -499,7 +530,11 @@ details[open] > summary::after,
 details.is-open > summary::after,
 .accordion-item.is-open .accordion-header::after,
 .wp-block-accordion.is-open .wp-block-accordion__header::after,
-.uagb-faq-item.is-open .uagb-faq-questions-button::after {
+.uagb-faq-child__outer-wrap.is-open .uagb-faq-questions-button::after,
+.uagb-accordion-child__outer-wrap.is-open .uagb-accordion-header::after,
+.kt-accordion-pane.is-open .kt-blocks-accordion-header::after,
+.su-spoiler.is-open .su-spoiler-title::after,
+.faq-item.is-open .faq-header::after {
     transform: rotate(-135deg);
     border-color: #e94560;
 }
@@ -525,7 +560,7 @@ details h1, details h2, details h3, details h4, details h5, details h6,
     margin: 0 !important;
 }
 
-/* ESTADO FECHADO: Ocultar ESTRITAMENTE APENAS o bloco de conteúdo interno (não os títulos H1-H6/summary) */
+/* ESTADO FECHADO — painéis ocultos (JS também aplica display:none via inline style) */
 details:not([open]):not(.is-open) .wp-block-details__content,
 details:not([open]):not(.is-open) > div:not(summary),
 details:not([open]):not(.is-open) > p,
@@ -535,15 +570,17 @@ details:not([open]):not(.is-open) > ol,
 .wp-block-details:not([open]):not(.is-open) > div:not(summary):not(.wp-block-details__summary),
 .accordion-item:not(.is-open) .accordion-content,
 .wp-block-accordion:not(.is-open) .wp-block-accordion__content,
-.uagb-faq-item:not(.is-open) .uagb-faq-content,
+.uagb-faq-child__outer-wrap:not(.is-open) .uagb-faq-content,
+.uagb-faq-child__outer-wrap:not(.is-open) .uagb-faq-body,
 .uagb-accordion-child__outer-wrap:not(.is-open) .uagb-accordion-content,
 .kt-accordion-pane:not(.is-open) .kt-accordion-panel,
 .su-spoiler:not(.is-open) .su-spoiler-content,
-.faq-item:not(.is-open) .faq-answer {
+.faq-item:not(.is-open) .faq-answer,
+.api-accordion-block:not(.is-open) .api-accordion-content {
     display: none !important;
 }
 
-/* ESTADO ABERTO: Exibir o bloco de conteúdo interno */
+/* ESTADO ABERTO — painéis visíveis com animação */
 details[open] .wp-block-details__content,
 details.is-open .wp-block-details__content,
 details[open] > div:not(summary),
@@ -583,24 +620,80 @@ details.is-open > ol,
     }
 }
 
-/* 2. Suporte aos demais Blocos do Gutenberg (Colunas, Imagens, Tabelas, Citações) */
+/* =====================================================================
+   SUPORTE COMPLETO AOS BLOCOS GUTENBERG (WP-BLOCK) NO TEMPLATE
+   Aplicado a .api-single-content, .api-category-page-content e .entry-content
+   ===================================================================== */
+
 .entry-content,
 .api-category-page-content,
-.api-single-content {
-    line-height: 1.7;
+.api-single-content,
+.api-single-item-content {
+    line-height: 1.75;
     color: #2d3748;
+    font-size: 1rem;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
-.wp-block-columns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+/* Parágrafo */
+.api-single-content p,
+.api-single-item-content p,
+.api-category-page-content p {
+    margin-bottom: 1.25rem;
 }
 
-.wp-block-column {
-    flex: 1;
-    min-width: 280px;
+/* Títulos */
+.api-single-content h1,
+.api-single-content h2,
+.api-single-content h3,
+.api-single-content h4,
+.api-single-content h5,
+.api-single-content h6,
+.api-single-item-content h1,
+.api-single-item-content h2,
+.api-single-item-content h3,
+.api-single-item-content h4,
+.api-single-item-content h5,
+.api-single-item-content h6 {
+    line-height: 1.3;
+    font-weight: 700;
+    margin: 1.75rem 0 0.75rem;
+    color: #1a202c;
+}
+
+/* Links */
+.api-single-content a,
+.api-single-item-content a {
+    color: #e94560;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.api-single-content a:hover,
+.api-single-item-content a:hover {
+    color: #c83349;
+}
+
+/* Listas */
+.api-single-content ul,
+.api-single-content ol,
+.api-single-item-content ul,
+.api-single-item-content ol {
+    margin: 0 0 1.25rem 1.5rem;
+    padding: 0;
+}
+
+.api-single-content li,
+.api-single-item-content li {
+    margin-bottom: 0.4rem;
+}
+
+/* Imagem */
+.wp-block-image,
+.wp-block-image figure {
+    margin: 1.5rem 0;
 }
 
 .wp-block-image img,
@@ -608,8 +701,47 @@ details.is-open > ol,
     max-width: 100%;
     height: auto;
     border-radius: 6px;
+    display: block;
 }
 
+.wp-block-image figcaption,
+figcaption {
+    font-size: 0.85rem;
+    color: #718096;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* Alinhamentos */
+.alignfull { width: 100%; max-width: 100%; }
+.alignwide { max-width: 100%; }
+.aligncenter { margin-left: auto; margin-right: auto; display: block; text-align: center; }
+.alignleft { float: left; margin: 0 1.5rem 1rem 0; }
+.alignright { float: right; margin: 0 0 1rem 1.5rem; }
+
+/* Colunas */
+.wp-block-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    align-items: flex-start;
+}
+
+.wp-block-column {
+    flex: 1;
+    min-width: 240px;
+}
+
+/* Separador */
+.wp-block-separator,
+hr {
+    border: none;
+    border-top: 2px solid #e2e8f0;
+    margin: 2rem 0;
+}
+
+/* Citação */
 .wp-block-quote,
 blockquote {
     border-left: 4px solid #e94560;
@@ -621,10 +753,47 @@ blockquote {
     color: #4a5568;
 }
 
+.wp-block-quote cite,
+.wp-block-quote footer {
+    font-size: 0.875rem;
+    color: #718096;
+    font-style: normal;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Código */
+.wp-block-code,
+pre {
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 1.5rem 0;
+}
+
+code {
+    background: #edf2f7;
+    color: #e94560;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875em;
+}
+
+/* Tabela */
+.wp-block-table {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
 .wp-block-table table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 1.5rem;
 }
 
 .wp-block-table th,
@@ -639,11 +808,16 @@ blockquote {
     font-weight: 600;
 }
 
+.wp-block-table tr:nth-child(even) td {
+    background-color: #f9fafb;
+}
+
+/* Botões */
 .wp-block-buttons {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
-    margin: 1rem 0;
+    margin: 1.25rem 0;
 }
 
 .wp-block-button__link {
@@ -661,4 +835,177 @@ blockquote {
     background-color: #c83349;
     color: #ffffff;
 }
+
+.wp-block-button.is-style-outline .wp-block-button__link {
+    background: transparent;
+    border: 2px solid #e94560;
+    color: #e94560;
+}
+
+.wp-block-button.is-style-outline .wp-block-button__link:hover {
+    background-color: #e94560;
+    color: #ffffff;
+}
+
+/* Embed / Video */
+.wp-block-embed,
+.wp-block-video {
+    margin: 1.5rem 0;
+}
+
+.wp-block-embed iframe,
+.wp-block-video video {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.wp-block-embed__wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+}
+
+.wp-block-embed__wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Media + Text */
+.wp-block-media-text {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin: 1.5rem 0;
+}
+
+.wp-block-media-text.has-media-on-the-right {
+    grid-template-columns: 1fr 1fr;
+    direction: rtl;
+}
+
+.wp-block-media-text__content {
+    direction: ltr;
+}
+
+@media (max-width: 640px) {
+    .wp-block-media-text {
+        grid-template-columns: 1fr;
+    }
+    .wp-block-media-text.has-media-on-the-right {
+        direction: ltr;
+    }
+}
+
+/* Pullquote */
+.wp-block-pullquote {
+    border-top: 4px solid #e94560;
+    border-bottom: 4px solid #e94560;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 2rem 0;
+    font-size: 1.25rem;
+    font-style: italic;
+    color: #4a5568;
+}
+
+/* Grupo / Cobertura / Cover */
+.wp-block-cover {
+    position: relative;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    color: #fff;
+}
+
+.wp-block-cover__inner-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 1rem;
+}
+
+/* Espaçador */
+.wp-block-spacer {
+    display: block;
+}
+
+/* Galeria */
+.wp-block-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+    list-style: none;
+    padding: 0;
+}
+
+.wp-block-gallery .wp-block-image,
+.wp-block-gallery figure {
+    margin: 0;
+    flex: 1 1 200px;
+}
+
+.wp-block-gallery img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* Verse / Preformatado */
+.wp-block-verse,
+.wp-block-preformatted {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap;
+    background: #f7fafc;
+    padding: 1rem 1.25rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin: 1.5rem 0;
+}
+
+/* Aviso / Notice */
+.wp-block-notice,
+.notice,
+.wp-block-warning {
+    background: #fff8e1;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem 1.25rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1.5rem 0;
+    color: #78350f;
+}
+
+/* Classe de cor de texto e fundo (geradas pelo editor) */
+.has-text-color { }
+.has-background { padding: 1.25rem; border-radius: 8px; }
+.has-white-color { color: #ffffff !important; }
+.has-black-color { color: #000000 !important; }
+.has-white-background-color { background-color: #ffffff !important; }
+.has-black-background-color { background-color: #000000 !important; }
+
+/* Tamanho de fonte */
+.has-small-font-size  { font-size: 0.8rem; }
+.has-regular-font-size { font-size: 1rem; }
+.has-large-font-size  { font-size: 1.5rem; }
+.has-x-large-font-size { font-size: 2rem; }
+.has-huge-font-size   { font-size: 2.5rem; }
+
+/* Texto centralizado */
+.has-text-align-center { text-align: center; }
+.has-text-align-right  { text-align: right; }
+.has-text-align-left   { text-align: left; }
+
+
 

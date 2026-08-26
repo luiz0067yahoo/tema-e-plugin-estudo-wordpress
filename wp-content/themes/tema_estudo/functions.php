@@ -39,7 +39,7 @@ function tema_estudo_enqueue_scripts() {
 		'1.0.0'
 	);
 
-	// Custom Frontend API Consumer Script
+	// Custom Frontend API Consumer Script (Core)
 	wp_enqueue_script(
 		'estudo-api-consumer',
 		get_template_directory_uri() . '/assets/js/estudo-api.js',
@@ -61,14 +61,65 @@ function tema_estudo_enqueue_scripts() {
 			'homeUrl'     => esc_url( home_url( '/' ) ),
 		)
 	);
+
+	// 1. Arquivo individual para Páginas
+	wp_enqueue_script(
+		'estudo-page-script',
+		get_template_directory_uri() . '/assets/js/page.js',
+		array( 'estudo-api-consumer' ),
+		'1.0.0',
+		true
+	);
+
+	// 2. Arquivo individual para Posts (Single Post)
+	wp_enqueue_script(
+		'estudo-post-script',
+		get_template_directory_uri() . '/assets/js/post.js',
+		array( 'estudo-api-consumer' ),
+		'1.0.0',
+		true
+	);
+
+	// 3. Arquivo individual para Produtos (Single Product)
+	wp_enqueue_script(
+		'estudo-product-script',
+		get_template_directory_uri() . '/assets/js/product.js',
+		array( 'estudo-api-consumer' ),
+		'1.0.0',
+		true
+	);
+
+	// 4. Arquivo individual para Categoria com apenas 1 post ou produto
+	wp_enqueue_script(
+		'estudo-category-only-script',
+		get_template_directory_uri() . '/assets/js/category-only-post-or-product.js',
+		array( 'estudo-api-consumer' ),
+		'1.0.0',
+		true
+	);
+
+	// 5. Arquivo individual para Categoria com 1 ou mais posts ou produtos
+	wp_enqueue_script(
+		'estudo-category-1-plus-script',
+		get_template_directory_uri() . '/assets/js/category-1-or-plus-post-or-product.js',
+		array( 'estudo-api-consumer', 'estudo-category-only-script' ),
+		'1.0.0',
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'tema_estudo_enqueue_scripts' );
 
 /**
- * Flush rewrite rules on theme activation or support category slug routes
+ * Suporte a regras de reescrita para categorias e posts amigáveis (ex: /home/nome-slug-post-ou-produto)
  */
 function tema_estudo_category_rewrite_rules() {
 	add_rewrite_rule( '^category/([^/]+)/?$', 'index.php?category_name=$matches[1]', 'top' );
+	add_rewrite_rule( '^([^/]+)/([^/]+)/?$', 'index.php?category_name=$matches[1]&name=$matches[2]', 'top' );
+
+	if ( ! get_option( 'tema_estudo_rules_flushed_v3' ) ) {
+		flush_rewrite_rules( false );
+		update_option( 'tema_estudo_rules_flushed_v3', true );
+	}
 }
 add_action( 'init', 'tema_estudo_category_rewrite_rules' );
 
