@@ -2,6 +2,11 @@
 
 ![Screenshot do projeto](screenshot.png)
 
+
+## 🚀 Demo
+
+**[👉 Acessar demonstração online](https://luizbrogliatto.freedev.app/home/)**
+
 # Tema e Plugin Estudo WordPress - API REST e Arquitetura MVC
 
 Este repositório contém a documentação e a implementação de um ambiente de desenvolvimento completo em **WordPress**, integrando um **Plugin Customizado (`plugin_estudo`)** construído sobre a arquitetura **MVC (Model-View-Controller)** com suporte a **API REST customizada**, e um **Tema Customizado (`tema_estudo`)** integrado via chamadas assíncronas em JavaScript modular e suporte a Full Site Editing (FSE).
