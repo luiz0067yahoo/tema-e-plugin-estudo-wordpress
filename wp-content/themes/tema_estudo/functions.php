@@ -20,6 +20,12 @@ function tema_estudo_setup() {
 	add_theme_support( 'responsive-embeds' );
 	add_theme_support( 'editor-styles' );
 	add_theme_support( 'post-thumbnails' );
+	add_theme_support( 'custom-logo', array(
+		'height'      => 100,
+		'width'       => 400,
+		'flex-height' => true,
+		'flex-width'  => true,
+	) );
 }
 add_action( 'after_setup_theme', 'tema_estudo_setup' );
 

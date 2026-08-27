@@ -25,10 +25,23 @@
             $response=null;
             try {
                 $params_data = $request->get_params();
-                $this->service->before_create($params_data); 
+                $custom_logo_id = get_theme_mod('custom_logo');
+                $logo_url = '';
+                if ($custom_logo_id) {
+                    $logo_data = wp_get_attachment_image_src($custom_logo_id, 'full');
+                    if ($logo_data && !empty($logo_data[0])) {
+                        $logo_url = $logo_data[0];
+                    }
+                }
+                if (empty($logo_url) && function_exists('get_site_icon_url')) {
+                    $logo_url = get_site_icon_url();
+                }
+
                 $site_settings = array(
-                    'title' => get_bloginfo('name'),
+                    'title'       => get_bloginfo('name'),
                     'description' => get_bloginfo('description'),
+                    'logo'        => $logo_url,
+                    'home_url'    => home_url('/'),
                     // Adicione mais configurações conforme necessário
                 );
                 $response = new WP_REST_Response($site_settings, 200);

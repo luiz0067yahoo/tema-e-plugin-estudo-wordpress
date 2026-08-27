@@ -198,7 +198,74 @@ document.addEventListener('DOMContentLoaded', () => {
     initCategoriesList();
     initSinglePostView();
     initAuthModal();
+    initMobileMenu();
 });
+
+/**
+ * Mobile Hamburger Menu Controller
+ */
+function initMobileMenu() {
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const headerNav = document.getElementById('api-header-nav');
+    const navOverlay = document.getElementById('nav-overlay');
+
+    if (!hamburgerBtn || !headerNav) return;
+
+    function openMenu() {
+        hamburgerBtn.classList.add('is-active');
+        hamburgerBtn.setAttribute('aria-expanded', 'true');
+        headerNav.classList.add('is-active');
+        if (navOverlay) navOverlay.classList.add('is-active');
+        document.body.classList.add('menu-open');
+    }
+
+    function closeMenu() {
+        hamburgerBtn.classList.remove('is-active');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+        headerNav.classList.remove('is-active');
+        if (navOverlay) navOverlay.classList.remove('is-active');
+        document.body.classList.remove('menu-open');
+    }
+
+    function toggleMenu() {
+        const isOpen = headerNav.classList.contains('is-active');
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+
+    hamburgerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+    });
+
+    if (navOverlay) {
+        navOverlay.addEventListener('click', closeMenu);
+    }
+
+    // Fechar ao clicar em qualquer link do menu no mobile
+    headerNav.addEventListener('click', (e) => {
+        if (e.target.closest('a')) {
+            closeMenu();
+        }
+    });
+
+    // Fechar com tecla ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && headerNav.classList.contains('is-active')) {
+            closeMenu();
+        }
+    });
+
+    // Fechar se redimensionar para tela desktop (acima de 992px)
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 992 && headerNav.classList.contains('is-active')) {
+            closeMenu();
+        }
+    });
+}
 
 /**
  * Load Site Settings dynamically via AJAX (/wp-json/api/v1/settings)
@@ -226,10 +293,14 @@ async function initSiteSettings() {
                 descEl.textContent = settings.description;
             }
 
-            if (logoEl && settings.logo) {
-                logoEl.src = settings.logo;
-                logoEl.alt = settings.title || 'Logo';
-                logoEl.style.display = 'inline-block';
+            if (logoEl) {
+                if (settings.logo) {
+                    logoEl.src = settings.logo;
+                    logoEl.alt = settings.title || 'Logo';
+                    logoEl.style.display = 'block';
+                } else {
+                    logoEl.style.display = 'none';
+                }
             }
         }
     } catch (err) {
@@ -320,6 +391,8 @@ function getRouteParamsFromURL(categories = []) {
 async function initCategoriesList() {
     const headerNav = document.getElementById('api-header-nav');
     const sidebarNav = document.getElementById('api-categories-container');
+    const logoLink = document.getElementById('api-site-logo-link');
+    const titleLink = document.querySelector('#api-site-title a');
 
     try {
         const catRes = await window.estudoAPI.getCategories();
@@ -330,9 +403,22 @@ async function initCategoriesList() {
             return;
         }
 
-        const currentCatSlug = getCurrentCategoryFromURL(categories);
         const homeUrl = (window.EstudoApiConfig && window.EstudoApiConfig.homeUrl) ? window.EstudoApiConfig.homeUrl : '/';
         const cleanHomeUrl = homeUrl.endsWith('/') ? homeUrl : homeUrl + '/';
+
+        // Determinar a primeira categoria para apontar a logomarca
+        const firstCategory = categories.find(c => c.slug && c.slug !== 'uncategorized' && c.name !== 'Sem categoria') || categories[0];
+        if (firstCategory && firstCategory.slug) {
+            const firstCategoryUrl = cleanHomeUrl + firstCategory.slug;
+            if (logoLink) {
+                logoLink.href = firstCategoryUrl;
+            }
+            if (titleLink) {
+                titleLink.href = firstCategoryUrl;
+            }
+        }
+
+        const currentCatSlug = getCurrentCategoryFromURL(categories);
 
         // Render Header Main Navigation Menu: Cada Categoria como um item de Menu NAV (ul/li)
         if (headerNav) {
