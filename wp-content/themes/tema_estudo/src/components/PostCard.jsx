@@ -13,16 +13,18 @@ export default function PostCard({ item, categorySlug }) {
         ? item.images[0]
         : item.images[0].src
       : '');
-  const rawContent = item.description || item.post_content || '';
-  const excerpt =
-    item.short_description ||
-    item.post_excerpt ||
-    (rawContent
-      ? rawContent
-          .replace(/<BR>/gi, ' ')
-          .replace(/<[^>]+>/g, '')
-          .substring(0, 110) + '...'
-      : '');
+  const rawContent = item.short_description || item.post_excerpt || item.description || item.post_content || item.content || '';
+  const cleanText = rawContent
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+  const excerpt = cleanText.length > 130 ? cleanText.substring(0, 130) + '...' : cleanText;
   const rawDate = item.date_created || item.post_date;
   const dateFormatted = rawDate
     ? new Date(rawDate).toLocaleDateString('pt-BR')

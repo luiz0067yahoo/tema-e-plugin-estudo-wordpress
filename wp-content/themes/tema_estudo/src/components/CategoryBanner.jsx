@@ -1,3 +1,4 @@
+import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
 import React, { useEffect, useRef } from 'react';
 
 export default function CategoryBanner({ page, categoryName }) {
@@ -5,14 +6,7 @@ export default function CategoryBanner({ page, categoryName }) {
 
   useEffect(() => {
     if (!contentRef.current) return;
-
-    // Inicializa interatividade de blocos como accordions/details se existirem no HTML da página
-    const details = contentRef.current.querySelectorAll('details');
-    details.forEach((d) => {
-      d.addEventListener('toggle', () => {
-        d.classList.toggle('is-open', d.open);
-      });
-    });
+    initGutenbergBlocks(contentRef.current);
   }, [page]);
 
   if (!page) {

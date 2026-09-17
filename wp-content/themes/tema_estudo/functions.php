@@ -26,6 +26,9 @@ function tema_estudo_setup() {
 		'flex-height' => true,
 		'flex-width'  => true,
 	) );
+	register_nav_menus( array(
+		'primary' => __( 'Menu Superior / Navbar Categorias', 'tema_estudo' ),
+	) );
 }
 add_action( 'after_setup_theme', 'tema_estudo_setup' );
 
@@ -81,6 +84,8 @@ function tema_estudo_enqueue_scripts() {
 				'siteName'    => get_bloginfo( 'name' ),
 				'description' => get_bloginfo( 'description' ),
 				'homeUrl'     => esc_url( home_url( '/' ) ),
+				'isEditMode'  => is_customize_preview() || is_user_logged_in() || current_user_can( 'edit_theme_options' ),
+				'categories'  => tema_estudo_get_all_categories(),
 				'navbar'      => array(
 					'style'      => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
 					'align'      => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
@@ -235,6 +240,46 @@ function tema_estudo_get_first_category_slug() {
 	return null;
 }
 
+/**
+ * Obtém todas as categorias cadastradas no WordPress para a Navbar do tema React.
+ *
+ * @return array Lista estruturada com todas as categorias ativas.
+ */
+function tema_estudo_get_all_categories() {
+	$args = array(
+		'taxonomy'   => 'category',
+		'hide_empty' => false,
+		'orderby'    => 'id', // Ordem de criação (ID / term_id ASC)
+		'order'      => 'ASC',
+		'number'     => 0, // 0 = retorna todas as categorias sem limite
+	);
 
+	$uncategorized = get_term_by( 'name', 'Sem categoria', 'category' );
+	if ( ! $uncategorized ) {
+		$uncategorized = get_term_by( 'slug', 'uncategorized', 'category' );
+	}
 
+	if ( $uncategorized && ! is_wp_error( $uncategorized ) ) {
+		$args['exclude'] = array( $uncategorized->term_id );
+	}
 
+	$categories = get_terms( $args );
+
+	if ( empty( $categories ) || is_wp_error( $categories ) ) {
+		return array();
+	}
+
+	$list = array();
+	foreach ( $categories as $cat ) {
+		$list[] = array(
+			'id'          => $cat->term_id,
+			'name'        => $cat->name,
+			'slug'        => $cat->slug,
+			'count'       => (int) $cat->count,
+			'parent'      => (int) $cat->parent,
+			'description' => $cat->description,
+		);
+	}
+
+	return $list;
+}

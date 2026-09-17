@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
 
 export default function SingleItemPage({ categories = [] }) {
   const { categorySlug, itemSlug } = useParams();
@@ -47,16 +48,10 @@ export default function SingleItemPage({ categories = [] }) {
     };
   }, [itemSlug]);
 
-  // Ativação de interatividade nos blocos Gutenberg de sanfona / details
+    // Ativação de interatividade em todos os blocos Gutenberg (simuladores, accordions, etc.)
   useEffect(() => {
     if (!contentRef.current) return;
-
-    const detailsElements = contentRef.current.querySelectorAll('details');
-    detailsElements.forEach((el) => {
-      el.addEventListener('toggle', () => {
-        el.classList.toggle('is-open', el.open);
-      });
-    });
+    initGutenbergBlocks(contentRef.current);
   }, [item]);
 
   if (loading) {

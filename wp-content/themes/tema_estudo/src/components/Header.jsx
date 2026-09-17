@@ -44,17 +44,13 @@ export default function Header({ categories = [], activeCategory, onToggleMenu, 
         </div>
 
         <div className="header-actions">
-          {isAuthenticated ? (
+          {isAuthenticated && (
             <div className="auth-badge">
               <span className="auth-status-pill">Conectado</span>
               <button onClick={logout} className="btn-logout" title="Sair da conta">
                 Sair
               </button>
             </div>
-          ) : (
-            <button onClick={openAuth} className="btn-login">
-              Entrar (JWT)
-            </button>
           )}
 
           <button

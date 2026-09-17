@@ -35,12 +35,13 @@
             $response=null;
             try {
                 $params_data = $request->get_params();
-                $per_page = isset($params_data['per_page']) ? intval($params_data['per_page']) : 12;
+                $per_page = isset($params_data['per_page']) ? intval($params_data['per_page']) : (isset($params_data['all']) ? 0 : 100);
                 $page = isset($params_data['page']) ? intval($params_data['page']) : 1;
                 $Categories=(object)$this->model->read($params_data,$page,$per_page,$orders= array());
                 $response = new WP_REST_Response($Categories->data, 200);
                 $response->header('x-wp-total', $Categories->total);
-                $response->header('x-wp-totalpages',ceil( $Categories->total/$per_page));
+                $totalPages = ($per_page > 0) ? ceil($Categories->total / $per_page) : 1;
+                $response->header('x-wp-totalpages', $totalPages);
                 $this->service->after_create($response,$request);
             } catch (Exception $erro) {
                 $response = new WP_REST_Response(['message' => "error"], 400);

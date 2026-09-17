@@ -8,8 +8,8 @@ const getBaseConfig = () => {
     return window.EstudoApiConfig;
   }
   return {
-    apiUrl: '/wp-json/api/v1/',
-    wpRestUrl: '/wp-json/',
+    apiUrl: 'https://luizbrogliatto.freedev.app/wp-json/api/v1/',
+    wpRestUrl: 'https://luizbrogliatto.freedev.app/wp-json/',
     nonce: '',
     siteName: 'Tema Estudo',
     description: 'Frontend Moderno em React',
@@ -53,11 +53,26 @@ class ApiService {
     return headers;
   }
 
+  buildUrl(base, endpoint) {
+    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+      return endpoint;
+    }
+    let cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    let baseUrl = base.endsWith('/') ? base : `${base}/`;
+
+    if (baseUrl.includes('?')) {
+      if (cleanEndpoint.includes('?')) {
+        cleanEndpoint = cleanEndpoint.replace('?', '&');
+      }
+      return `${baseUrl}${cleanEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
+    }
+
+    return `${baseUrl}${cleanEndpoint}`.replace(/([^:]\/)\/+/g, '$1');
+  }
+
   async request(endpoint, options = {}) {
     this.config = getBaseConfig();
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const base = this.config.apiUrl.endsWith('/') ? this.config.apiUrl : `${this.config.apiUrl}/`;
-    const url = `${base}${cleanEndpoint}`;
+    const url = this.buildUrl(this.config.apiUrl, endpoint);
 
     try {
       const response = await fetch(url, {
@@ -73,6 +88,9 @@ class ApiService {
         if (response.status === 404 && endpoint.includes('posts')) {
           return this.fallbackWpPosts(endpoint);
         }
+        if (response.status === 404 && endpoint.includes('pages')) {
+          return this.fallbackWpPages(endpoint);
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `Erro HTTP ${response.status}`);
       }
@@ -85,7 +103,8 @@ class ApiService {
   }
 
   async fallbackWpCategories() {
-    const res = await fetch(`${this.config.wpRestUrl}wp/v2/categories?per_page=100`, {
+    const url = this.buildUrl(this.config.wpRestUrl, 'wp/v2/categories?per_page=100');
+    const res = await fetch(url, {
       headers: this.getHeaders(),
     });
     if (!res.ok) return [];
@@ -93,11 +112,37 @@ class ApiService {
   }
 
   async fallbackWpPosts(endpoint) {
-    const res = await fetch(`${this.config.wpRestUrl}wp/v2/posts?_embed`, {
+    const query = endpoint.includes('?') ? endpoint.substring(endpoint.indexOf('?')) : '';
+    const url = this.buildUrl(this.config.wpRestUrl, `wp/v2/posts${query}`);
+    const res = await fetch(url, {
       headers: this.getHeaders(),
     });
     if (!res.ok) return [];
     return await res.json();
+  }
+
+  async fallbackWpPages(endpoint) {
+    try {
+      const query = endpoint.includes('?') ? endpoint.substring(endpoint.indexOf('?')) : '';
+      const url = this.buildUrl(this.config.wpRestUrl, `wp/v2/pages${query}`);
+      const res = await fetch(url, {
+        headers: this.getHeaders(),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data)
+        ? data.map((p) => ({
+            id: p.id,
+            name: p.title?.rendered || p.title || '',
+            slug: p.slug,
+            description: p.content?.rendered || p.content || '',
+            short_description: p.excerpt?.rendered || p.excerpt || '',
+            thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',
+          }))
+        : [];
+    } catch {
+      return [];
+    }
   }
 
   async getSiteSettings() {
@@ -114,17 +159,62 @@ class ApiService {
 
   async getCategories() {
     try {
-      const data = await this.request('categories');
+      // Consome a rota customizada solicitada: /wp-json/api/v1/categories
+      const data = await this.request('categories?per_page=100');
       const cats = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
-      return cats.map(c => ({
-        id: c.id || c.term_id,
-        name: c.name || c.title || 'Categoria',
-        slug: c.slug || '',
-        count: c.count || 0,
-      }));
-    } catch {
-      return [];
+      if (cats && cats.length > 0) {
+        return cats
+          .map((c) => ({
+            id: c.id || c.term_id,
+            name: c.name || c.title || 'Categoria',
+            slug: c.slug || '',
+            count: typeof c.count !== 'undefined' ? Number(c.count) : 0,
+            parent: typeof c.parent !== 'undefined' ? Number(c.parent) : 0,
+            description: c.description || '',
+            thumbnail: c.thumbnail || null,
+          }))
+          .sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+      }
+    } catch (err) {
+      console.warn('[API] getCategories falhou na URL base, tentando diretamente na rota pública:', err.message);
+      try {
+        const directRes = await fetch('https://luizbrogliatto.freedev.app/wp-json/api/v1/categories');
+        if (directRes.ok) {
+          const directData = await directRes.json();
+          const cats = Array.isArray(directData) ? directData : (directData && Array.isArray(directData.data) ? directData.data : []);
+          if (cats && cats.length > 0) {
+            return cats
+              .map((c) => ({
+                id: c.id || c.term_id,
+                name: c.name || c.title || 'Categoria',
+                slug: c.slug || '',
+                count: typeof c.count !== 'undefined' ? Number(c.count) : 0,
+                parent: typeof c.parent !== 'undefined' ? Number(c.parent) : 0,
+                description: c.description || '',
+                thumbnail: c.thumbnail || null,
+              }))
+              .sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+          }
+        }
+      } catch (fallbackErr) {
+        console.warn('[API] Fallback direto falhou:', fallbackErr.message);
+      }
     }
+
+    // Se o WordPress forneceu categorias em EstudoApiConfig, usa-as diretamente
+    if (typeof window !== 'undefined' && window.EstudoApiConfig?.categories?.length > 0) {
+      return window.EstudoApiConfig.categories;
+    }
+
+    // Fallback com as categorias reais da API caso esteja rodando totalmente offline
+    return [
+      { id: 12, name: 'Home', slug: 'home', count: 0, parent: 0 },
+      { id: 13, name: 'Produtos', slug: 'produtos', count: 0, parent: 0 },
+      { id: 14, name: 'Serviços', slug: 'servicos', count: 0, parent: 0 },
+      { id: 15, name: 'Fotos', slug: 'fotos', count: 0, parent: 0 },
+      { id: 16, name: 'Vídeos', slug: 'videos', count: 0, parent: 0 },
+      { id: 17, name: 'Contato', slug: 'contato', count: 0, parent: 0 },
+    ];
   }
 
   async getPages(params = {}) {

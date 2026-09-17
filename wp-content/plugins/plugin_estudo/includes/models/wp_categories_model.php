@@ -3,39 +3,55 @@ require_once(plugin_dir_path(PLUGIN_FILE_URL) . "/vendor/autoload.php");
     
 class WPCategoriesModel {
     private $wpdb;
-    public function read($params_data,$page=1,$per_page=10,$orders= array()) {
+    public function read($params_data,$page=1,$per_page=100,$orders= array()) {
         $result=null;
         try {
             $uncategorized = get_term_by('name', 'Sem categoria', 'category');
-            $uncategorized_id = $uncategorized->term_id;
-            $offset = ($page - 1) * $per_page; // Correção: Definir o offset corretamente
+            $uncategorized_id = $uncategorized ? $uncategorized->term_id : 0;
+            
+            $limit = intval($per_page);
+            $number = ($limit <= 0 || $limit >= 100) ? 0 : $limit;
+            $offset = ($number > 0 && $page > 1) ? ($page - 1) * $number : 0;
+            $orderby = isset($params_data['orderby']) ? sanitize_text_field($params_data['orderby']) : (isset($orders['orderby']) ? $orders['orderby'] : 'id');
+            $order = isset($params_data['order']) ? sanitize_text_field($params_data['order']) : (isset($orders['order']) ? $orders['order'] : 'ASC');
+
             $args = array(
                 //'taxonomy' => 'product_cat',
                 'taxonomy' => 'category',
                 'hide_empty' => false,
-                'exclude' => $uncategorized_id, 
-                'number' => $per_page,
+                'number' => $number,
                 'offset' => $offset,                
-                'orderby' => 'id',
+                'orderby' => $orderby,
+                'order' => $order,
             );
             
+            if ($uncategorized_id) {
+                $args['exclude'] = array($uncategorized_id);
+            }
             if(isset($params_data['slug'])){
                 $args['slug'] = $params_data['slug'];
+            }
+            if(isset($params_data['parent'])){
+                $args['parent'] = intval($params_data['parent']);
             }
             $categories_count = 0;
             $categories = get_terms($args);
             
             $categorie_list = array();
-            foreach ($categories as $categorie) {
-                $category_image = $this->get_term_thumbnail($categorie->term_id);
-                $categorie_data = array(
-                    'id' => $categorie->term_id,
-                    'name' => $categorie->name,
-                    'slug' => $categorie->slug,
-                    'description' => $categorie->description,
-                    'thumbnail' => $category_image,
-                );
-                $categorie_list[] = $categorie_data;
+            if (!empty($categories) && !is_wp_error($categories)) {
+                foreach ($categories as $categorie) {
+                    $category_image = $this->get_term_thumbnail($categorie->term_id);
+                    $categorie_data = array(
+                        'id' => $categorie->term_id,
+                        'name' => $categorie->name,
+                        'slug' => $categorie->slug,
+                        'description' => $categorie->description,
+                        'count' => (int) $categorie->count,
+                        'parent' => (int) $categorie->parent,
+                        'thumbnail' => $category_image,
+                    );
+                    $categorie_list[] = $categorie_data;
+                }
             }
             $categories_count=count($categorie_list);
             $result = ["data"=>$categorie_list,"total"=>$categories_count];

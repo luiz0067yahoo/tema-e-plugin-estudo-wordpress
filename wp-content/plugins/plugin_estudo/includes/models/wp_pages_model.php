@@ -9,27 +9,38 @@ class WPPagesModel {
         try {
             $slug = isset($params_data['slug']) ? sanitize_text_field($params_data['slug']) : '';
 
-            $args = array(
-                'post_type'      => 'page',
-                'post_status'    => 'publish',
-                'posts_per_page' => $per_page,
-                'paged'          => $page,
-                'orderby'        => 'title',
-                'order'          => 'ASC',
-            );
+            $pages = array();
+            $pages_count = 0;
 
             if (!empty($slug)) {
-                $args['name'] = $slug;
+                $page_by_path = get_page_by_path($slug, OBJECT, 'page');
+                if ($page_by_path && $page_by_path->post_status === 'publish') {
+                    $pages = array($page_by_path);
+                    $pages_count = 1;
+                } else {
+                    $args = array(
+                        'post_type'      => 'page',
+                        'post_status'    => 'publish',
+                        'pagename'       => $slug,
+                        'posts_per_page' => 1,
+                    );
+                    $query = new WP_Query($args);
+                    $pages = $query->posts;
+                    $pages_count = count($pages);
+                }
+            } else {
+                $args = array(
+                    'post_type'      => 'page',
+                    'post_status'    => 'publish',
+                    'posts_per_page' => $per_page,
+                    'paged'          => $page,
+                    'orderby'        => 'title',
+                    'order'          => 'ASC',
+                );
+                $query = new WP_Query($args);
+                $pages = $query->posts;
+                $pages_count = $query->found_posts;
             }
-
-            $query = new WP_Query($args);
-            $pages = $query->posts;
-
-            $args_count = $args;
-            $args_count['posts_per_page'] = -1;
-            $args_count['paged'] = 1;
-            $query_count = new WP_Query($args_count);
-            $pages_count = $query_count->found_posts;
             
             $page_list = array();
             foreach ($pages as $p) {

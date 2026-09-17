@@ -35,7 +35,19 @@ const getInitialNavbarConfig = () => {
 };
 
 export default function App() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    if (
+      typeof window !== 'undefined' &&
+      Array.isArray(window.EstudoApiConfig?.categories) &&
+      window.EstudoApiConfig.categories.length > 0
+    ) {
+      const list = window.EstudoApiConfig.categories.filter(
+        (c) => c.slug !== 'uncategorized' && c.name !== 'Sem categoria'
+      );
+      return list.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+    }
+    return [];
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [navbarConfig, setNavbarConfig] = useState(getInitialNavbarConfig);
 
@@ -44,7 +56,9 @@ export default function App() {
       const filtered = cats.filter(
         (c) => c.slug !== 'uncategorized' && c.name !== 'Sem categoria'
       );
-      setCategories(filtered.length > 0 ? filtered : cats);
+      const list = filtered.length > 0 ? filtered : cats;
+      list.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+      setCategories(list);
     });
   }, []);
 

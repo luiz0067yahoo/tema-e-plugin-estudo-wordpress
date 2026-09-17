@@ -20,11 +20,20 @@ const getBasename = () => {
 };
 
 const mountApp = () => {
-  const container = document.getElementById('root');
+  let container = document.getElementById('root');
   if (!container) {
-    console.error('[React Theme] Elemento #root não encontrado no DOM.');
+    console.warn('[React Theme] Elemento #root não encontrado. Injetando container dinamicamente...');
+    container = document.createElement('div');
+    container.id = 'root';
+    const target = document.querySelector('.wp-site-blocks') || document.body;
+    target.innerHTML = '';
+    target.appendChild(container);
+  }
+
+  if (container.dataset.reactMounted === 'true') {
     return;
   }
+  container.dataset.reactMounted = 'true';
 
   const basename = getBasename();
   const root = createRoot(container);

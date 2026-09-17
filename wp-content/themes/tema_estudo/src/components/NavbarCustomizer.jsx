@@ -9,8 +9,48 @@ const PRESET_COLORS = [
   { name: 'Violeta', value: '#8b5cf6' },
 ];
 
+export const isEditModeActive = () => {
+  if (typeof window === 'undefined') return false;
+
+  // 1. Injetado pelo WordPress via wp_localize_script (is_customize_preview || is_user_logged_in)
+  if (window.EstudoApiConfig?.isEditMode) return true;
+
+  // 2. Classes nativas do WordPress no body
+  if (
+    document.body.classList.contains('customize-preview') ||
+    document.body.classList.contains('logged-in') ||
+    document.body.classList.contains('wp-admin')
+  ) {
+    return true;
+  }
+
+  // 3. Barra de administração do WordPress no topo
+  if (document.getElementById('wpadminbar')) return true;
+
+  // 4. Parâmetros de pré-visualização ou edição
+  const search = window.location.search;
+  if (
+    search.includes('customize_changeset_uuid') ||
+    search.includes('customize') ||
+    search.includes('edit=1') ||
+    search.includes('preview=true')
+  ) {
+    return true;
+  }
+
+  // 5. Objeto wp.customize disponível
+  if (window.wp && window.wp.customize) return true;
+
+  return false;
+};
+
 export default function NavbarCustomizer({ config, onUpdateConfig, onResetConfig }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Só exibe as opções de estilo visual dos links se estiver em modo de edição
+  if (!isEditModeActive()) {
+    return null;
+  }
 
   return (
     <>
