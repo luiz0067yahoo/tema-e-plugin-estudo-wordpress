@@ -1,20 +1,8 @@
 <?php
 /**
- * Single Post Template for Tema Estudo.
+ * Single template for Tema Estudo (React SPA Shell).
  *
  * @package TemaEstudo
  */
 
-get_header();
-?>
-
-<main class="main-container">
-    <section class="content-area">
-        <div id="api-single-post-container">
-            <div class="api-loading"></div>
-        </div>
-    </section>
-</main>
-
-<?php
-get_footer();
+require get_template_directory() . '/index.php';
