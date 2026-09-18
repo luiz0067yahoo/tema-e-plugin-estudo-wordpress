@@ -4,12 +4,12 @@ import { NavLink, useLocation } from 'react-router-dom';
 export default function Navbar({
   categories = [],
   isMenuOpen = false,
-  onCloseMenu = () => {},
+  onCloseMenu = () => { },
   config = {
     style: 'pill',
     align: 'left',
     sticky: true,
-    showCounts: true,
+    showCounts: false,
     accent: '#6366f1',
   },
 }) {
@@ -115,9 +115,8 @@ export default function Navbar({
   return (
     <>
       <nav
-        className={`react-navbar ${styleClass} ${alignClass} ${stickyClass} ${
-          isMenuOpen ? 'is-open' : ''
-        }`}
+        className={`react-navbar ${styleClass} ${alignClass} ${stickyClass} ${isMenuOpen ? 'is-open' : ''
+          }`}
         style={{
           '--nav-accent': config.accent || '#6366f1',
         }}
@@ -185,9 +184,8 @@ export default function Navbar({
                 return (
                   <li
                     key={cat.id || cat.slug}
-                    className={`nav-item ${hasChildren ? 'has-children' : ''} ${
-                      isDropdownOpen ? 'dropdown-open' : ''
-                    }`}
+                    className={`nav-item ${hasChildren ? 'has-children' : ''} ${isDropdownOpen ? 'dropdown-open' : ''
+                      }`}
                     onMouseEnter={() => !isMenuOpen && hasChildren && setOpenDropdown(cat.id)}
                     onMouseLeave={() => !isMenuOpen && hasChildren && setOpenDropdown(null)}
                   >
@@ -203,9 +201,6 @@ export default function Navbar({
                         }}
                       >
                         <span className="nav-text">{cat.name}</span>
-                        {config.showCounts && typeof cat.count === 'number' && cat.count > 0 && (
-                          <span className="nav-count">{cat.count}</span>
-                        )}
                       </NavLink>
 
                       {hasChildren && (
@@ -242,11 +237,6 @@ export default function Navbar({
                             >
                               <span className="nav-dropdown-bullet">•</span>
                               <span className="nav-dropdown-text">{sub.name}</span>
-                              {config.showCounts &&
-                                typeof sub.count === 'number' &&
-                                sub.count > 0 && (
-                                  <span className="nav-count is-sub">{sub.count}</span>
-                                )}
                             </NavLink>
                           </li>
                         ))}

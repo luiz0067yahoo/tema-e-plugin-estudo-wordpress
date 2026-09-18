@@ -246,6 +246,51 @@ class ApiService {
     }
   }
 
+  async searchAll(searchTerm = '') {
+    const term = searchTerm.trim();
+    if (!term) return [];
+
+    try {
+      // Busca simultaneamente posts e páginas
+      const [postsRes, pagesRes] = await Promise.allSettled([
+        this.getPosts({ search: term }),
+        this.getPages({ search: term }),
+      ]);
+
+      const postsList = postsRes.status === 'fulfilled' && Array.isArray(postsRes.value) ? postsRes.value : [];
+      const pagesList = pagesRes.status === 'fulfilled' && Array.isArray(pagesRes.value) ? pagesRes.value : [];
+
+      const formattedPages = pagesList.map((p) => ({
+        ...p,
+        type: 'page',
+      }));
+
+      // Combina e remove duplicatas por slug ou id
+      const combined = [...postsList];
+      const seenKeys = new Set(postsList.map((item) => `${item.type || 'post'}-${item.slug || item.id}`));
+
+      for (const page of formattedPages) {
+        const key = `page-${page.slug || page.id}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          combined.push(page);
+        }
+      }
+
+      // Ordena todos os conteúdos relacionados por data decrescente (mais recentes primeiro)
+      combined.sort((a, b) => {
+        const dateA = new Date(a.date_created || a.post_date || a.date || 0).getTime();
+        const dateB = new Date(b.date_created || b.post_date || b.date || 0).getTime();
+        return dateB - dateA;
+      });
+
+      return combined;
+    } catch (err) {
+      console.warn('[API] Erro ao pesquisar:', err);
+      return [];
+    }
+  }
+
   async login(username, password) {
     const data = await this.request('auth', {
       method: 'POST',

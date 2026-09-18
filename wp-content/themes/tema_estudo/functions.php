@@ -283,3 +283,16 @@ function tema_estudo_get_all_categories() {
 
 	return $list;
 }
+
+/**
+ * Redireciona buscas nativas do WordPress (?s=termo) para a rota amigável /busca/{termo}
+ */
+function tema_estudo_redirect_search() {
+	if ( ! is_admin() && isset( $_GET['s'] ) && '' !== trim( $_GET['s'] ) ) {
+		$search_query = rawurlencode( trim( wp_unslash( $_GET['s'] ) ) );
+		wp_safe_redirect( home_url( '/busca/' . $search_query ) );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'tema_estudo_redirect_search' );
+

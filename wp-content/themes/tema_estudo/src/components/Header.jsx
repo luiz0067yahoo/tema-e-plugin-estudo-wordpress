@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function Header({ categories = [], activeCategory, onToggleMenu, isMenuOpen }) {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
   const [settings, setSettings] = useState({
     site_name: window.EstudoApiConfig?.siteName || 'Tema Estudo',
     site_description: window.EstudoApiConfig?.description || 'WordPress REST API + React SPA',
@@ -22,6 +24,16 @@ export default function Header({ categories = [], activeCategory, onToggleMenu, 
       }
     });
   }, []);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const clean = searchTerm.trim();
+    if (clean) {
+      navigate(`/busca/${encodeURIComponent(clean)}`);
+    } else {
+      navigate('/busca');
+    }
+  };
 
   const firstCatSlug = categories.length > 0 ? categories[0].slug : '';
   const homeTarget = firstCatSlug ? `/${firstCatSlug}` : '/';
@@ -44,6 +56,31 @@ export default function Header({ categories = [], activeCategory, onToggleMenu, 
         </div>
 
         <div className="header-actions">
+          {/* Barra de Pesquisa no Cabeçalho */}
+          <form className="header-search-form" onSubmit={handleSearchSubmit} role="search">
+            <input
+              type="text"
+              placeholder="Pesquisar posts e páginas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="header-search-input"
+              aria-label="Pesquisar no blog"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="header-search-clear"
+                onClick={() => setSearchTerm('')}
+                aria-label="Limpar pesquisa"
+              >
+                ✕
+              </button>
+            )}
+            <button type="submit" className="header-search-btn" aria-label="Enviar pesquisa">
+              🔍
+            </button>
+          </form>
+
           {isAuthenticated && (
             <div className="auth-badge">
               <span className="auth-status-pill">Conectado</span>

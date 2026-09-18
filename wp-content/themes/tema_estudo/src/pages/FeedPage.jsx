@@ -138,7 +138,7 @@ export default function FeedPage({ categories = [] }) {
               <article ref={singleArticleRef} className="single-article-view single-post-in-feed">
                 <header className="article-header">
                   <div className="header-meta">
-                    <span className="meta-badge">{isProduct ? 'Produto' : 'Publicação'}</span>
+                    {isProduct && <span className="meta-badge">Produto</span>}
                     {singleDateFormatted && <span className="meta-date">Publicado em: {singleDateFormatted}</span>}
                   </div>
                   <h1 className="article-title">{singleTitle}</h1>

@@ -29,22 +29,24 @@ export default function PostCard({ item, categorySlug }) {
   const dateFormatted = rawDate
     ? new Date(rawDate).toLocaleDateString('pt-BR')
     : 'Recente';
+  const isPage = item.type === 'page';
   const isProduct = item.type === 'product' || item.price !== undefined;
   const price = item.price || item.regular_price || null;
 
-  const targetLink = `/${categorySlug || 'post'}/${itemSlug}`;
+  const targetLink = isPage ? `/${itemSlug}` : `/${categorySlug || 'post'}/${itemSlug}`;
 
   return (
-    <article className={`post-card ${isProduct ? 'is-product' : 'is-post'}`}>
+    <article className={`post-card ${isProduct ? 'is-product' : isPage ? 'is-page' : 'is-post'}`}>
       <Link to={targetLink} className="card-thumb-link">
         {thumbUrl ? (
           <img src={thumbUrl} alt={title} className="card-thumb" loading="lazy" />
         ) : (
           <div className="card-thumb-placeholder">
-            <span>{isProduct ? '🛍️' : '📄'}</span>
+            <span>{isProduct ? '🛍️' : isPage ? '📑' : '📄'}</span>
           </div>
         )}
-        {isProduct && <span className="card-badge">Produto</span>}
+        {isProduct && <span className="card-badge is-product">Produto</span>}
+        {isPage && <span className="card-badge is-page">Página</span>}
       </Link>
 
       <div className="card-body">

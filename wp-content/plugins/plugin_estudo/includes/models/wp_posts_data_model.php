@@ -9,16 +9,36 @@ class WPPostsDataModel {
         try {
             $category_slug = isset($params_data['category']) ? sanitize_text_field($params_data['category']) : '';
             $slug = isset($params_data['slug']) ? sanitize_text_field($params_data['slug']) : '';
+            $search = isset($params_data['search']) ? sanitize_text_field($params_data['search']) : (isset($params_data['s']) ? sanitize_text_field($params_data['s']) : '');
+            $post_type = isset($params_data['post_type']) ? sanitize_text_field($params_data['post_type']) : '';
+
+            // Se houver pesquisa ativa e nenhum post_type explícito for solicitado, busca tanto em posts quanto em páginas
+            $types = array('post');
+            if (!empty($post_type)) {
+                $types = array_map('trim', explode(',', $post_type));
+            } elseif (!empty($search)) {
+                $types = array('post', 'page');
+            }
+
+            // Ordenação: quando for pesquisa, ordena por data decrescente (mais recentes primeiro)
+            $default_orderby = !empty($search) ? 'date' : 'title';
+            $default_order = !empty($search) ? 'DESC' : 'ASC';
+            $orderby = isset($params_data['orderby']) ? sanitize_text_field($params_data['orderby']) : $default_orderby;
+            $order = isset($params_data['order']) ? sanitize_text_field($params_data['order']) : $default_order;
 
             // Configurando os argumentos para WP_Query
             $args = array(
-                'post_type'      => 'post',
+                'post_type'      => $types,
                 'post_status'    => 'publish',
                 'posts_per_page' => $per_page,
                 'paged'          => $page,
-                'orderby'        => 'title',
-                'order'          => 'ASC',
+                'orderby'        => $orderby,
+                'order'          => $order,
             );
+
+            if (!empty($search)) {
+                $args['s'] = $search;
+            }
 
             if (!empty($slug)) {
                 $args['name'] = $slug;
@@ -46,6 +66,7 @@ class WPPostsDataModel {
             foreach ($posts as $post) {
                 $post_data = array(
                     'id'                => $post->ID,
+                    'type'              => $post->post_type,
                     'name'              => $post->post_title,
                     'slug'              => $post->post_name,
                     'description'       => $this->format_content($post->post_content),

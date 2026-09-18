@@ -29,7 +29,6 @@ export default function CategoryBanner({ page, categoryName }) {
   return (
     <section className="category-banner-card">
       <div className="banner-top">
-        <span className="banner-tag">Página da Categoria</span>
         <h2 className="banner-title">{title}</h2>
       </div>
 

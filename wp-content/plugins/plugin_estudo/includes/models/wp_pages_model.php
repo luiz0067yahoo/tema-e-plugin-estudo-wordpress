@@ -8,6 +8,7 @@ class WPPagesModel {
         $result = null;
         try {
             $slug = isset($params_data['slug']) ? sanitize_text_field($params_data['slug']) : '';
+            $search = isset($params_data['search']) ? sanitize_text_field($params_data['search']) : (isset($params_data['s']) ? sanitize_text_field($params_data['s']) : '');
 
             $pages = array();
             $pages_count = 0;
@@ -29,14 +30,22 @@ class WPPagesModel {
                     $pages_count = count($pages);
                 }
             } else {
+                $default_orderby = !empty($search) ? 'date' : 'title';
+                $default_order = !empty($search) ? 'DESC' : 'ASC';
+                $orderby = isset($params_data['orderby']) ? sanitize_text_field($params_data['orderby']) : $default_orderby;
+                $order = isset($params_data['order']) ? sanitize_text_field($params_data['order']) : $default_order;
+
                 $args = array(
                     'post_type'      => 'page',
                     'post_status'    => 'publish',
                     'posts_per_page' => $per_page,
                     'paged'          => $page,
-                    'orderby'        => 'title',
-                    'order'          => 'ASC',
+                    'orderby'        => $orderby,
+                    'order'          => $order,
                 );
+                if (!empty($search)) {
+                    $args['s'] = $search;
+                }
                 $query = new WP_Query($args);
                 $pages = $query->posts;
                 $pages_count = $query->found_posts;
@@ -46,6 +55,7 @@ class WPPagesModel {
             foreach ($pages as $p) {
                 $page_data = array(
                     'id'                => $p->ID,
+                    'type'              => 'page',
                     'name'              => $p->post_title,
                     'slug'              => $p->post_name,
                     'description'       => $this->format_content($p->post_content),
