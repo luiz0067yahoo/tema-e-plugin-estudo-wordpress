@@ -64,6 +64,7 @@ class WPPagesModel {
                     'author'            => $p->post_author,
                     'parent'            => $p->post_parent,
                     'thumbnail'         => $this->get_page_thumbnail_src($p->ID),
+                    'edit_url'          => admin_url('post.php?post=' . $p->ID . '&action=edit'),
                 );
                 $page_list[] = $page_data;
             }
@@ -89,6 +90,7 @@ class WPPagesModel {
                     'author'            => $p->post_author,
                     'parent'            => $p->post_parent,
                     'thumbnail'         => $this->get_page_thumbnail_src($p->ID),
+                    'edit_url'          => admin_url('post.php?post=' . $p->ID . '&action=edit'),
                 );
                 $result = $page_data;
             }

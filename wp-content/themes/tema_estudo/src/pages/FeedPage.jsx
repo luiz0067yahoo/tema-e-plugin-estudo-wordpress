@@ -4,6 +4,7 @@ import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
 import api from '../services/api';
 import CategoryBanner from '../components/CategoryBanner';
 import PostCard from '../components/PostCard';
+import EditPostButton from '../components/EditPostButton';
 
 export default function FeedPage({ categories = [] }) {
   const { categorySlug } = useParams();
@@ -177,6 +178,7 @@ export default function FeedPage({ categories = [] }) {
                 {singleThumb && (
                   <div className="article-featured-image">
                     <img src={singleThumb} alt={singleTitle} />
+                    <EditPostButton postId={single.id || single.ID} editUrl={single.edit_url} title={singleTitle} />
                   </div>
                 )}
 

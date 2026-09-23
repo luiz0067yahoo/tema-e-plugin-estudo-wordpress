@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
+import EditPostButton from '../components/EditPostButton';
 
 export default function SingleItemPage({ categories = [] }) {
   const { categorySlug, itemSlug } = useParams();
@@ -117,6 +118,7 @@ export default function SingleItemPage({ categories = [] }) {
       {thumbUrl && (
         <div className="article-featured-image">
           <img src={thumbUrl} alt={title} />
+          <EditPostButton postId={item.id || item.ID} editUrl={item.edit_url} title={title} />
         </div>
       )}
 

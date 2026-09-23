@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import EditPostButton from './EditPostButton';
 
 export default function PostCard({ item, categorySlug }) {
   const itemId = item.id || item.ID;
@@ -37,17 +38,20 @@ export default function PostCard({ item, categorySlug }) {
 
   return (
     <article className={`post-card ${isProduct ? 'is-product' : isPage ? 'is-page' : 'is-post'}`}>
-      <Link to={targetLink} className="card-thumb-link">
-        {thumbUrl ? (
-          <img src={thumbUrl} alt={title} className="card-thumb" loading="lazy" />
-        ) : (
-          <div className="card-thumb-placeholder">
-            <span>{isProduct ? '🛍️' : isPage ? '📑' : '📄'}</span>
-          </div>
-        )}
-        {isProduct && <span className="card-badge is-product">Produto</span>}
-        {isPage && <span className="card-badge is-page">Página</span>}
-      </Link>
+      <div className="card-thumb-wrapper">
+        <Link to={targetLink} className="card-thumb-link">
+          {thumbUrl ? (
+            <img src={thumbUrl} alt={title} className="card-thumb" loading="lazy" />
+          ) : (
+            <div className="card-thumb-placeholder">
+              <span>{isProduct ? '🛍️' : isPage ? '📑' : '📄'}</span>
+            </div>
+          )}
+          {isProduct && <span className="card-badge is-product">Produto</span>}
+          {isPage && <span className="card-badge is-page">Página</span>}
+        </Link>
+        <EditPostButton postId={itemId} editUrl={item.edit_url} title={title} />
+      </div>
 
       <div className="card-body">
         <h3 className="card-title">

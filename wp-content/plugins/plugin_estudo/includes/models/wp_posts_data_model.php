@@ -75,6 +75,7 @@ class WPPostsDataModel {
                     'author'            => $post->post_author,
                     'images'            => $this->get_post_images($post->ID),
                     'thumbnail'         => $this->get_post_thumbnail_src($post->ID),
+                    'edit_url'          => admin_url('post.php?post=' . $post->ID . '&action=edit'),
                 );
                 $post_list[] = $post_data;
             }
@@ -101,6 +102,7 @@ class WPPostsDataModel {
                     'author'            => $post->post_author,
                     'images'            => $this->get_post_images($post->ID),
                     'thumbnail'         => $this->get_post_thumbnail_src($post->ID),
+                    'edit_url'          => admin_url('post.php?post=' . $post->ID . '&action=edit'),
                 );
                 $result = $post_data;
             }
