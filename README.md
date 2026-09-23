@@ -97,34 +97,53 @@ A pasta `includes/` organiza o código do plugin segundo o padrão de arquitetur
 
 ---
 
-## 3. Tema Customizado: `tema_estudo`
+## 3. Tema Customizado: `tema_estudo` (React SPA)
 
-Localizado em `wp-content/themes/tema_estudo`, este tema estruturado segue padrões modernos do WordPress com suporte a templates de blocos, assets dedicados e integração assíncrona modular com a API REST do plugin.
+Localizado em `wp-content/themes/tema_estudo`, este tema opera como uma **Single Page Application (SPA)** moderna construída com **React 18**, **Vite** e **React Router v6**, integrada de forma híbrida ao WordPress e à REST API do `plugin_estudo`.
 
-### 3.1. Arquivos Core e Templates PHP/HTML
+> 📘 Para a documentação técnica completa do frontend, consulte o guia detalhado: **[docs/ARQUITETURA_REACT_SPA.md](docs/ARQUITETURA_REACT_SPA.md)**.
+
+### 3.1. Arquivos Core e Casca PHP
+
+O WordPress atua como a casca (Shell) que inicializa o ambiente, enfileira os assets compilados e injeta os metadados da API via `wp_localize_script`:
 
 | Arquivo / Diretório | Tipo | Função e Descrição |
 | :--- | :--- | :--- |
-| `functions.php` | **Tema Core** | Arquivo de funções do tema. Registra suportes do tema, menus, enqueue de scripts/estilos e hooks. |
-| `style.css` | **Estilos** | Folha de estilos principal contendo os metadados do tema (Nome, Autor, Versão) e estilos visuais do layout. |
-| `header.php` / `footer.php` | **Template Parts** | Estruturas padrão de cabeçalho e rodapé do tema clássico WordPress. |
-| `index.php` / `single.php` / `page.php` | **Templates** | Arquivos de template para exibição da página inicial, posts individuais e páginas estáticas. |
-| `archive.php` / `category.php` / `404.php` | **Templates** | Templates específicos para listagens de arquivos, categorias e páginas de erro 404. |
-| `theme.json` | **Configuração** | Configurações globais do editor de blocos (Full Site Editing - FSE), paleta de cores, espaçamentos e tipografia. |
-| `parts/` & `templates/` | **Blocos HTML** | Partes e templates estruturados em HTML para o sistema de blocos do WordPress. |
+| `index.php` | **React SPA Shell** | Ponto de montagem da aplicação frontend contendo o `<div id="root"></div>`. |
+| `functions.php` | **Tema Core** | Enfileira os bundles compilados (`assets/dist/app.js` e `app.css`), injeta a configuração global `window.EstudoApiConfig` e registra controles no WordPress Customizer. |
+| `header.php` / `footer.php` | **Estrutura Base** | Tags `<!DOCTYPE html>`, chamadas `wp_head()`, `wp_body_open()` e `wp_footer()`. |
+| `page.php` / `single.php` / `archive.php` / `category.php` / `404.php` | **Templates de Encaminhamento** | Delegam a renderização para a casca `index.php`, permitindo que o React Router controle as rotas da SPA. |
+| `style.css` | **Metadados** | Cabeçalho exigido pelo WordPress (Nome do tema, Versão, Autor) e folha de estilos base. |
+| `theme.json` | **Configuração** | Definições de paleta de cores, tipografia e layout do WordPress. |
+| `assets/dist/` | **Bundle Compilado** | Contém `app.js` e `app.css` gerados automaticamente pelo Vite. |
 
-### 3.2. Módulo de Scripts JavaScript (`assets/js/`)
+### 3.2. Estrutura do Frontend React (`src/`)
 
-Conjunto de scripts modulares client-side encarregados de realizar o consumo da API REST (autenticação JWT, rotas e dados) e a renderização dinâmica e interativa das visões do tema:
+| Diretório / Arquivo | Responsabilidade |
+| :--- | :--- |
+| `src/main.jsx` | Ponto de entrada JavaScript. Calcula dinamicamente o basename da URL e monta o React no elemento `#root`. |
+| `src/App.jsx` | Componente mestre com layout, Header, Navbar, Footer, Modal de Autenticação e rotas principais. |
+| `src/components/` | Componentes modulares reutilizáveis: `Header.jsx`, `Navbar.jsx`, `Footer.jsx`, `AuthModal.jsx`, `CategoryBanner.jsx`, `NavbarCustomizer.jsx` e `PostCard.jsx`. |
+| `src/pages/` | Visões da aplicação: `FeedPage.jsx`, `SingleItemPage.jsx` (posts/produtos) e `NotFoundPage.jsx`. |
+| `src/context/` | Gerenciamento de estado global: `AuthContext.jsx` para controle de sessão e tokens JWT. |
+| `src/services/` | Comunicação com o backend: `api.js` para consumo resiliente das rotas REST de `/wp-json/api/v1/`. |
+| `src/index.css` | Folha de estilos com design system moderno (Dark Navy, Glassmorphism, animações e responsividade). |
 
-| Arquivo JavaScript | Módulo / Função | Descrição Detalhada |
-| :--- | :--- | :--- |
-| `estudo-api.js` | **Cliente REST & Core Renderer** | Define a classe `EstudoAPIClient` (gerenciamento de JWT, nonces e chamadas AJAX aos endpoints REST), renderiza o menu mobile/hambúrguer, configurações dinâmicas do site, menu de navegação e inclui o motor interativo universal para accordions/sanfonas do Gutenberg/plugins. |
-| `category-1-or-plus-post-or-product.js` | **Visão Categoria Feed/Grid** | Gerencia a exibição da listagem/grid de categorias contendo 1 ou mais artigos/produtos. Processa o cabeçalho/banner da categoria, formata preços, atende a rotas amigáveis (`/{categoria}/{slug}`) e delega para a visualização single quando necessário. |
-| `category-only-post-or-product.js` | **Visão Categoria Única** | Script dedicado para categorias que possuem exatamente 1 post ou produto. Renderiza o conteúdo completo e detalhado do item diretamente na página da categoria. |
-| `post.js` | **Visão Individual de Posts** | Controla a requisição e renderização completa de artigos (Post Single). Resolve parâmetros de rota amigável ou de consulta (`?post_id=X`) e atualiza dinamicamente o histórico da URL via `history.replaceState`. |
-| `product.js` | **Visão Individual de Produtos** | Gerencia a exibição detalhada de produtos customizados, incluindo galeria de imagens, SKU, status de estoque, cálculo/exibição de preços normais e promocionais e botões de ação de compra. |
-| `page.js` | **Visão Páginas Estáticas** | Responsável pela identificação de rotas por slug ou ID (`?page_id=X`) e pela renderização dinâmica do conteúdo das páginas do WordPress. |
+### 3.3. Ciclo de Build e Geração Automática do `.zip`
+
+O tema possui integração nativa entre o Vite e o empacotamento do WordPress:
+
+```bash
+cd wp-content/themes/tema_estudo
+npm install
+npm run build
+```
+
+Ao executar `npm run build`:
+1. O **Vite** compila e minifica todo o código React para `assets/dist/app.js` e `assets/dist/app.css`.
+2. O hook `postbuild` executa `scripts/create-zip.js`.
+3. O pacote de instalação otimizado **`wp-content/themes/tema_estudo.zip`** (~653 KB) é gerado automaticamente, sem arquivos de desenvolvimento (`node_modules`), pronto para upload no painel do WordPress (`Aparência > Temas > Enviar tema`).
+
 
 ---
 
@@ -220,20 +239,26 @@ WordPress
 │   └── themes/
 │       └── tema_estudo/
 │           ├── functions.php
+│           ├── index.php (Root SPA Shell)
+│           ├── header.php / footer.php
+│           ├── page.php / single.php / archive.php
 │           ├── style.css
 │           ├── theme.json
-│           ├── header.php
-│           ├── footer.php
-│           ├── templates/
-│           ├── parts/
+│           ├── vite.config.js
+│           ├── package.json
+│           ├── scripts/
+│           │   └── create-zip.js
+│           ├── src/
+│           │   ├── main.jsx
+│           │   ├── App.jsx
+│           │   ├── components/
+│           │   ├── pages/
+│           │   ├── context/
+│           │   └── services/
 │           └── assets/
-│               └── js/
-│                   ├── estudo-api.js
-│                   ├── category-1-or-plus-post-or-product.js
-│                   ├── category-only-post-or-product.js
-│                   ├── post.js
-│                   ├── product.js
-│                   └── page.js
+│               └── dist/
+│                   ├── app.js
+│                   └── app.css
 ```
 
 ---
@@ -365,15 +390,14 @@ POST /wp-json/api/v1/verify
 - **WordPress**
 - **PHP**
 - **MySQL**
-- **JavaScript**
+- **React 18**
+- **Vite**
+- **React Router v6**
 - **REST API**
-- **JWT**
+- **JWT (JSON Web Token)**
 - **Composer**
-- **Gutenberg**
-- **Full Site Editing (FSE)**
-- **MVC**
-- **HTML**
-- **CSS**
+- **MVC (Model-View-Controller)**
+- **CSS Moderno / Glassmorphism**
 
 ---
 

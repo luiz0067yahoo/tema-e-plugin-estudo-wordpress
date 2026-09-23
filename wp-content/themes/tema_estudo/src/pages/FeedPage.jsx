@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
-import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CategoryBanner from '../components/CategoryBanner';
 import PostCard from '../components/PostCard';
 
 export default function FeedPage({ categories = [] }) {
   const { categorySlug } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const searchQuery = searchParams.get('s') || searchParams.get('q') || '';
 
   const [posts, setPosts] = useState([]);
   const [categoryPage, setCategoryPage] = useState(null);
@@ -15,9 +18,9 @@ export default function FeedPage({ categories = [] }) {
   const [error, setError] = useState(null);
   const singleArticleRef = useRef(null);
 
-  const shouldRedirect = !categorySlug && categories.length > 0;
+  const shouldRedirect = !categorySlug && !searchQuery && categories.length > 0;
 
-  // Redirecionamento limpo da raiz para a primeira categoria sem recarregar a página
+  // Redirecionamento da raiz para a primeira categoria se não for busca
   useEffect(() => {
     if (shouldRedirect) {
       const firstCat =
@@ -31,7 +34,9 @@ export default function FeedPage({ categories = [] }) {
   }, [shouldRedirect, categories, navigate]);
 
   const currentCategory = categories.find((c) => c.slug === categorySlug);
-  const currentCategoryName = currentCategory
+  const currentCategoryName = searchQuery
+    ? `Resultados para: "${searchQuery}"`
+    : currentCategory
     ? currentCategory.name
     : categorySlug
     ? `Categoria: ${categorySlug}`
@@ -47,14 +52,30 @@ export default function FeedPage({ categories = [] }) {
 
     const loadData = async () => {
       try {
-        const postsPromise = api.getPosts(categorySlug ? { category: categorySlug } : {});
-        const pagePromise = categorySlug ? api.getPages({ slug: categorySlug }) : Promise.resolve([]);
+        const params = {};
+        if (categorySlug) params.category = categorySlug;
+        if (searchQuery) params.s = searchQuery;
+
+        const postsPromise = api.getPosts(params);
+        const pagePromise =
+          categorySlug && !searchQuery ? api.getPages({ slug: categorySlug }) : Promise.resolve([]);
 
         const [postsRes, pagesRes] = await Promise.all([postsPromise, pagePromise]);
 
         if (!isMounted) return;
 
-        const postsList = Array.isArray(postsRes) ? postsRes : [];
+        let postsList = Array.isArray(postsRes) ? postsRes : [];
+
+        // Filtro client-side se for pesquisa
+        if (searchQuery) {
+          const lowerQ = searchQuery.toLowerCase().trim();
+          postsList = postsList.filter((p) => {
+            const title = (p.name || p.title || '').toLowerCase();
+            const desc = (p.description || p.short_description || p.content || '').toLowerCase();
+            return title.includes(lowerQ) || desc.includes(lowerQ);
+          });
+        }
+
         setPosts(postsList);
 
         const pagesList = Array.isArray(pagesRes) ? pagesRes : [];
@@ -77,10 +98,9 @@ export default function FeedPage({ categories = [] }) {
     return () => {
       isMounted = false;
     };
-  }, [categorySlug]);
+  }, [categorySlug, searchQuery, shouldRedirect]);
 
-
-  // Ativação de blocos interativos do Gutenberg (ex: simuladores, accordions)
+  // Inicializa interatividade de blocos Gutenberg em artigos únicos
   useEffect(() => {
     if (posts.length === 1 && singleArticleRef.current) {
       initGutenbergBlocks(singleArticleRef.current);
@@ -91,7 +111,7 @@ export default function FeedPage({ categories = [] }) {
     return (
       <div className="feed-loading-container">
         <div className="loading-spinner"></div>
-        <p>Carregando publicações...</p>
+        <p>{searchQuery ? `Buscando por "${searchQuery}"...` : 'Carregando publicações...'}</p>
       </div>
     );
   }
@@ -113,7 +133,11 @@ export default function FeedPage({ categories = [] }) {
         {posts.length === 0 ? (
           !categoryPage && (
             <div className="feed-empty-card">
-              <p>Nenhuma publicação ou produto encontrado nesta categoria.</p>
+              <p>
+                {searchQuery
+                  ? `Nenhum conteúdo encontrado para "${searchQuery}". Tente outros termos.`
+                  : 'Nenhuma publicação ou produto encontrado nesta categoria.'}
+              </p>
             </div>
           )
         ) : posts.length === 1 ? (

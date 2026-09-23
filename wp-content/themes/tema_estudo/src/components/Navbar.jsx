@@ -95,7 +95,7 @@ export default function Navbar({
   if (!categories || categories.length === 0) {
     return (
       <nav
-        className={`react-navbar ${styleClass} ${alignClass} ${stickyClass}`}
+        className={`react-navbar ${styleClass} ${alignClass} ${stickyClass} ${isMenuOpen ? 'is-open' : ''}`}
         style={{ '--nav-accent': config.accent || '#6366f1' }}
         aria-label="Menu de Categorias"
       >
