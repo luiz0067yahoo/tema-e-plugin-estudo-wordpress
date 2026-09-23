@@ -561,11 +561,6 @@ body.admin-bar .site-top-wrapper.is-sticky {
   font-size: 0.85rem;
 }
 
-.nav-count.is-sub {
-  margin-left: auto;
-  font-size: 0.7rem;
-}
-
 /* Skeleton Loading para a Navbar */
 .nav-skeleton-list {
   display: flex;
@@ -712,19 +707,6 @@ body.admin-bar .site-top-wrapper.is-sticky {
   font-weight: 700;
 }
 
-.nav-count {
-  font-size: 0.72rem;
-  padding: 2px 7px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-pill);
-  color: var(--text-muted);
-  transition: var(--transition);
-}
-
-.nav-link.is-active .nav-count {
-  background: var(--nav-accent, var(--primary));
-  color: #fff;
-}
 
 
 /* ==========================================================================

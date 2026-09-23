@@ -15,7 +15,6 @@ const DEFAULT_NAVBAR_CONFIG = {
   style: 'pill',
   align: 'left',
   sticky: true,
-  showCounts: false,
   accent: '#6366f1',
 };
 

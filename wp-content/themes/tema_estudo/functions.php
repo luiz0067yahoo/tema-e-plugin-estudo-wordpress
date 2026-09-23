@@ -90,11 +90,10 @@ function tema_estudo_enqueue_scripts() {
 				'isEditMode'   => is_customize_preview() || is_user_logged_in() || current_user_can( 'edit_theme_options' ),
 				'categories'   => tema_estudo_get_all_categories(),
 				'navbar'      => array(
-					'style'      => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
-					'align'      => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
-					'sticky'     => (bool) get_theme_mod( 'tema_estudo_navbar_sticky', true ),
-					'showCounts' => (bool) get_theme_mod( 'tema_estudo_navbar_show_counts', true ),
-					'accent'     => get_theme_mod( 'tema_estudo_navbar_accent', '#6366f1' ),
+					'style'  => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
+					'align'  => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
+					'sticky' => (bool) get_theme_mod( 'tema_estudo_navbar_sticky', true ),
+					'accent' => get_theme_mod( 'tema_estudo_navbar_accent', '#6366f1' ),
 				),
 			)
 		);
@@ -156,18 +155,7 @@ function tema_estudo_customize_register( $wp_customize ) {
 		'type'     => 'checkbox',
 	) );
 
-	// 4. Exibir Contador de Posts
-	$wp_customize->add_setting( 'tema_estudo_navbar_show_counts', array(
-		'default'           => true,
-		'sanitize_callback' => 'wp_validate_boolean',
-	) );
-	$wp_customize->add_control( 'tema_estudo_navbar_show_counts', array(
-		'label'    => __( 'Exibir Contador de Posts nas Categorias', 'tema_estudo' ),
-		'section'  => 'tema_estudo_navbar_section',
-		'type'     => 'checkbox',
-	) );
-
-	// 5. Cor de Destaque (Accent)
+	// 4. Cor de Destaque (Accent)
 	$wp_customize->add_setting( 'tema_estudo_navbar_accent', array(
 		'default'           => '#6366f1',
 		'sanitize_callback' => 'sanitize_hex_color',

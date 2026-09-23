@@ -147,19 +147,6 @@ export default function NavbarCustomizer({ config, onUpdateConfig, onResetConfig
                     />
                     <span className="toggle-switch"></span>
                   </label>
-
-                  <label className="toggle-item">
-                    <span className="toggle-label">
-                      <strong>Contador de Posts</strong>
-                      <small>Exibe a quantidade de itens por categoria</small>
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={config.showCounts}
-                      onChange={(e) => onUpdateConfig({ showCounts: e.target.checked })}
-                    />
-                    <span className="toggle-switch"></span>
-                  </label>
                 </div>
               </div>
 

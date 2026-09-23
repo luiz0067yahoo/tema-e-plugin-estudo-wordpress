@@ -10,7 +10,6 @@ export default function Navbar({
     style: 'pill',
     align: 'left',
     sticky: true,
-    showCounts: false,
     accent: '#6366f1',
   },
 }) {
