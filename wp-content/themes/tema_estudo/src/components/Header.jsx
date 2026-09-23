@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function Header({ categories = [], activeCategory, onToggleMenu, isMenuOpen }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
   const [settings, setSettings] = useState({
     site_name: window.EstudoApiConfig?.siteName || 'Tema Estudo',
     site_description: window.EstudoApiConfig?.description || 'WordPress REST API + React SPA',
     site_logo: '',
   });
+
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('s') || '');
   const { isAuthenticated, openAuth, logout } = useAuth();
 
-  // Sincroniza o input com a URL se estiver na rota /busca/:query
+  // Sincroniza o input com a URL quando o parâmetro ?s= mudar
   useEffect(() => {
-    if (location.pathname.startsWith('/busca/')) {
-      const query = decodeURIComponent(location.pathname.replace('/busca/', ''));
-      setSearchQuery(query);
-    } else if (location.pathname === '/busca') {
-      const searchParams = new URLSearchParams(location.search);
-      setSearchQuery(searchParams.get('s') || searchParams.get('q') || '');
-    }
-  }, [location.pathname, location.search]);
+    setSearchQuery(searchParams.get('s') || '');
+  }, [searchParams]);
 
   useEffect(() => {
     api.getSiteSettings().then((data) => {
@@ -44,17 +39,15 @@ export default function Header({ categories = [], activeCategory, onToggleMenu, 
     e.preventDefault();
     const query = searchQuery.trim();
     if (query) {
-      navigate(`/busca/${encodeURIComponent(query)}`);
+      navigate(`/?s=${encodeURIComponent(query)}`);
     } else {
-      navigate('/busca');
+      navigate(homeTarget);
     }
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    if (location.pathname.startsWith('/busca')) {
-      navigate(homeTarget);
-    }
+    navigate(homeTarget);
   };
 
   return (

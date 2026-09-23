@@ -1482,16 +1482,8 @@ details.wp-block-details summary {
 
   .nav-scroll-btn {
     display: none !important;
-=======
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 999;
+  }
+
   .navbar-mobile-header {
     display: flex;
     align-items: center;
