@@ -478,58 +478,70 @@ function tema_estudo_get_top_menu_categories() {
 		return array();
 	}
 
-	$menu_categories   = array();
-	$seen_cat_ids      = array();
-	$menu_id_to_cat_id = array();
+	$menu_items_map = array();
 
 	foreach ( $items as $item ) {
-		$cat = null;
+		$cat  = null;
+		$slug = '';
 
 		// A. Item do tipo Categoria nativa do WordPress
 		if ( 'category' === $item->object || ( 'taxonomy' === $item->type && 'category' === $item->object ) ) {
 			$cat = get_term( (int) $item->object_id, 'category' );
-		} elseif ( 'custom' === $item->type && ! empty( $item->url ) ) {
-			// B. Item como link customizado apontando para a URL de uma categoria
+			if ( $cat && ! is_wp_error( $cat ) ) {
+				$slug = $cat->slug;
+			}
+		} elseif ( ! empty( $item->url ) ) {
+			// B. Item como link customizado apontando para a URL de uma categoria ou página
 			$path     = trim( (string) wp_parse_url( $item->url, PHP_URL_PATH ), '/' );
 			$segments = explode( '/', $path );
-			$slug     = end( $segments );
-			if ( $slug ) {
-				$cat_by_slug = get_term_by( 'slug', $slug, 'category' );
+			$last_seg = end( $segments );
+			if ( $last_seg ) {
+				$cat_by_slug = get_term_by( 'slug', $last_seg, 'category' );
 				if ( $cat_by_slug && ! is_wp_error( $cat_by_slug ) ) {
-					$cat = $cat_by_slug;
+					$cat  = $cat_by_slug;
+					$slug = $cat_by_slug->slug;
+				} else {
+					$slug = sanitize_title( $last_seg );
 				}
 			}
 		}
 
-		if ( $cat && ! is_wp_error( $cat ) && empty( $seen_cat_ids[ $cat->term_id ] ) ) {
-			$cat_id = (int) $cat->term_id;
-			$seen_cat_ids[ $cat_id ] = true;
-			$menu_id_to_cat_id[ (int) $item->ID ] = $cat_id;
-
-			$menu_categories[] = array(
-				'id'           => $cat_id,
-				'name'         => ! empty( $item->title ) ? $item->title : $cat->name,
-				'slug'         => $cat->slug,
-				'count'        => (int) $cat->count,
-				'parent'       => (int) $cat->parent,
-				'menu_item_id' => (int) $item->ID,
-				'menu_parent'  => (int) $item->menu_item_parent,
-				'menu_order'   => (int) $item->menu_order,
-				'description'  => $cat->description,
-				'edit_url'     => admin_url( 'term.php?taxonomy=category&tag_ID=' . $cat_id . '&post_type=post' ),
-			);
+		if ( empty( $slug ) ) {
+			$slug = sanitize_title( $item->title );
 		}
+
+		$cat_id = ( $cat && ! is_wp_error( $cat ) ) ? (int) $cat->term_id : (int) $item->ID;
+		$name   = ! empty( $item->title ) ? $item->title : ( ( $cat && ! is_wp_error( $cat ) ) ? $cat->name : 'Item' );
+
+		$menu_items_map[ (int) $item->ID ] = array(
+			'id'           => $cat_id,
+			'name'         => $name,
+			'slug'         => $slug,
+			'count'        => ( $cat && ! is_wp_error( $cat ) ) ? (int) $cat->count : 0,
+			'parent'       => 0,
+			'menu_item_id' => (int) $item->ID,
+			'menu_parent'  => (int) $item->menu_item_parent,
+			'menu_order'   => (int) $item->menu_order,
+			'description'  => ( $cat && ! is_wp_error( $cat ) ) ? $cat->description : '',
+			'edit_url'     => ( $cat && ! is_wp_error( $cat ) ) ? admin_url( 'term.php?taxonomy=category&tag_ID=' . $cat_id . '&post_type=post' ) : '',
+			'children'     => array(),
+		);
 	}
 
-	// Mapeia hierarquia do menu (se um item foi indentado dentro de outro no WordPress)
-	for ( $i = 0; $i < count( $menu_categories ); $i++ ) {
-		$mp = $menu_categories[ $i ]['menu_parent'];
-		if ( $mp > 0 && isset( $menu_id_to_cat_id[ $mp ] ) ) {
-			$menu_categories[ $i ]['parent'] = $menu_id_to_cat_id[ $mp ];
+	// Constrói a árvore com suporte a sub-níveis ilimitados
+	$tree = array();
+	foreach ( $menu_items_map as $item_id => &$node ) {
+		$parent_id = $node['menu_parent'];
+		if ( $parent_id > 0 && isset( $menu_items_map[ $parent_id ] ) ) {
+			$node['parent'] = $menu_items_map[ $parent_id ]['id'];
+			$menu_items_map[ $parent_id ]['children'][] = &$node;
+		} else {
+			$tree[] = &$node;
 		}
 	}
+	unset( $node );
 
-	return $menu_categories;
+	return $tree;
 }
 
 /**

@@ -23,6 +23,7 @@ export default function Navbar({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [openSubDropdown, setOpenSubDropdown] = useState(null);
   const [mobileSearch, setMobileSearch] = useState('');
 
   // Estado para armazenar exclusivamente as categorias presentes no menu topo do WordPress
@@ -90,29 +91,35 @@ export default function Navbar({
     return `${adminBase}/term.php?taxonomy=category&tag_ID=${catId}&post_type=post`;
   };
 
-  // Organiza categorias em hierarquia (pais e filhos)
+  // Organiza categorias em hierarquia com suporte a sub-níveis ilimitados
   const categoryTree = React.useMemo(() => {
     if (!displayCategories || displayCategories.length === 0) return [];
 
-    const hasHierarchy = displayCategories.some((c) => c.parent && c.parent > 0);
-    if (!hasHierarchy) {
-      // Todas planas
-      return displayCategories.map((cat) => ({ ...cat, children: [] }));
+    // Se já vier estruturado com `children` (da árvore gerada pelo menu do WordPress)
+    const hasPrebuiltChildren = displayCategories.some(
+      (c) => Array.isArray(c.children) && c.children.length > 0
+    );
+    if (hasPrebuiltChildren) {
+      return displayCategories;
     }
 
-    const parents = displayCategories.filter((c) => !c.parent || c.parent === 0);
-    const childrenMap = {};
-    displayCategories.forEach((c) => {
-      if (c.parent && c.parent > 0) {
-        if (!childrenMap[c.parent]) childrenMap[c.parent] = [];
-        childrenMap[c.parent].push(c);
+    // Caso seja uma lista plana com `parent`, monta a árvore
+    const itemMap = new Map();
+    displayCategories.forEach((cat) => {
+      itemMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    const roots = [];
+    displayCategories.forEach((cat) => {
+      const node = itemMap.get(cat.id);
+      if (cat.parent && cat.parent > 0 && itemMap.has(cat.parent)) {
+        itemMap.get(cat.parent).children.push(node);
+      } else {
+        roots.push(node);
       }
     });
 
-    return parents.map((parent) => ({
-      ...parent,
-      children: childrenMap[parent.id] || [],
-    }));
+    return roots.length > 0 ? roots : displayCategories.map((cat) => ({ ...cat, children: [] }));
   }, [displayCategories]);
 
   // Monitora rolagem horizontal no desktop
@@ -150,15 +157,24 @@ export default function Navbar({
   const alignClass = `is-align-${config.align || 'left'}`;
   const stickyClass = config.sticky ? 'is-sticky' : '';
 
-  // Filtro no menu mobile
+  // Filtro no menu mobile (busca recursiva em todos os níveis)
   const filteredMobileCategories = React.useMemo(() => {
     if (!mobileSearch.trim()) return categoryTree;
     const term = mobileSearch.toLowerCase();
-    return categoryTree.filter(
-      (cat) =>
-        cat.name.toLowerCase().includes(term) ||
-        (cat.children && cat.children.some((sub) => sub.name.toLowerCase().includes(term)))
-    );
+
+    const filterNode = (node) => {
+      const matches = node.name.toLowerCase().includes(term);
+      const filteredChildren = (node.children || []).map(filterNode).filter(Boolean);
+      if (matches || filteredChildren.length > 0) {
+        return {
+          ...node,
+          children: filteredChildren,
+        };
+      }
+      return null;
+    };
+
+    return categoryTree.map(filterNode).filter(Boolean);
   }, [categoryTree, mobileSearch]);
 
   // Exibe skeleton se ainda estiver carregando
@@ -247,14 +263,18 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Lista de menus de categorias */}
+          {/* Lista de menus de categorias e sub-níveis */}
           <div className="navbar-scroll-viewport" ref={scrollRef} onScroll={checkScroll}>
             <ul className="nav-list">
               {(isMenuOpen ? filteredMobileCategories : categoryTree).map((cat) => {
-                const hasChildren = cat.children && cat.children.length > 0;
+                const hasChildren = Array.isArray(cat.children) && cat.children.length > 0;
                 const isChildActive =
                   hasChildren &&
-                  cat.children.some((sub) => location.pathname === `/${sub.slug}`);
+                  cat.children.some(
+                    (sub) =>
+                      location.pathname === `/${sub.slug}` ||
+                      (sub.children && sub.children.some((g) => location.pathname === `/${g.slug}`))
+                  );
                 const isDropdownOpen = openDropdown === cat.id;
 
                 return (
@@ -267,19 +287,24 @@ export default function Navbar({
                   >
                     <div className="nav-link-group">
                       <NavLink
-                        to={`/${cat.slug}`}
+                        to={cat.slug && cat.slug !== '#' ? `/${cat.slug}` : '#'}
                         className={({ isActive }) =>
-                          `nav-link ${isActive || isChildActive ? 'is-active' : ''}`
+                          `nav-link ${(isActive && cat.slug !== '#') || isChildActive ? 'is-active' : ''}`
                         }
-                        onClick={() => {
-                          setOpenDropdown(null);
-                          onCloseMenu();
+                        onClick={(e) => {
+                          if (cat.slug === '#' || !cat.slug) {
+                            e.preventDefault();
+                            setOpenDropdown(isDropdownOpen ? null : cat.id);
+                          } else {
+                            setOpenDropdown(null);
+                            onCloseMenu();
+                          }
                         }}
                       >
                         <span className="nav-text">{cat.name}</span>
                       </NavLink>
 
-                      {isWpLoggedIn && (
+                      {isWpLoggedIn && cat.edit_url && (
                         <a
                           href={getCategoryEditUrl(cat)}
                           target="_blank"
@@ -314,7 +339,7 @@ export default function Navbar({
                             e.stopPropagation();
                             setOpenDropdown(isDropdownOpen ? null : cat.id);
                           }}
-                          aria-label={`Subcategorias de ${cat.name}`}
+                          aria-label={`Subníveis de ${cat.name}`}
                           aria-expanded={isDropdownOpen}
                         >
                           ▾
@@ -322,54 +347,141 @@ export default function Navbar({
                       )}
                     </div>
 
-                    {/* Submenu Dropdown de Subcategorias */}
+                    {/* Submenu Dropdown de Primeiro Subnível */}
                     {hasChildren && (
                       <ul className={`nav-dropdown-menu ${isDropdownOpen ? 'is-visible' : ''}`}>
-                        {cat.children.map((sub) => (
-                          <li key={sub.id || sub.slug} className="nav-dropdown-item">
-                            <div className="nav-dropdown-link-group">
-                              <NavLink
-                                to={`/${sub.slug}`}
-                                className={({ isActive }) =>
-                                  `nav-dropdown-link ${isActive ? 'is-active' : ''}`
-                                }
-                                onClick={() => {
-                                  setOpenDropdown(null);
-                                  onCloseMenu();
-                                }}
-                              >
-                                <span className="nav-dropdown-bullet">•</span>
-                                <span className="nav-dropdown-text">{sub.name}</span>
-                              </NavLink>
+                        {cat.children.map((sub) => {
+                          const hasSubChildren = Array.isArray(sub.children) && sub.children.length > 0;
+                          const isSubActive =
+                            location.pathname === `/${sub.slug}` ||
+                            (hasSubChildren && sub.children.some((g) => location.pathname === `/${g.slug}`));
+                          const isSubDropdownOpen = openSubDropdown === sub.id;
 
-                              {isWpLoggedIn && (
-                                <a
-                                  href={getCategoryEditUrl(sub)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="nav-cat-edit-btn is-sub"
-                                  title={`Editar subcategoria "${sub.name}" no WordPress`}
-                                  aria-label={`Editar subcategoria "${sub.name}" no WordPress`}
-                                  onClick={(e) => e.stopPropagation()}
+                          return (
+                            <li
+                              key={sub.id || sub.slug}
+                              className={`nav-dropdown-item ${hasSubChildren ? 'has-sub-children' : ''} ${isSubDropdownOpen ? 'dropdown-open' : ''}`}
+                              onMouseEnter={() => !isMenuOpen && hasSubChildren && setOpenSubDropdown(sub.id)}
+                              onMouseLeave={() => !isMenuOpen && hasSubChildren && setOpenSubDropdown(null)}
+                            >
+                              <div className="nav-dropdown-link-group">
+                                <NavLink
+                                  to={sub.slug && sub.slug !== '#' ? `/${sub.slug}` : '#'}
+                                  className={({ isActive }) =>
+                                    `nav-dropdown-link ${(isActive && sub.slug !== '#') || isSubActive ? 'is-active' : ''}`
+                                  }
+                                  onClick={(e) => {
+                                    if (sub.slug === '#' || !sub.slug) {
+                                      e.preventDefault();
+                                      setOpenSubDropdown(isSubDropdownOpen ? null : sub.id);
+                                    } else {
+                                      setOpenDropdown(null);
+                                      setOpenSubDropdown(null);
+                                      onCloseMenu();
+                                    }
+                                  }}
                                 >
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    width="10"
-                                    height="10"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                                  <span className="nav-dropdown-bullet">•</span>
+                                  <span className="nav-dropdown-text">{sub.name}</span>
+                                </NavLink>
+
+                                {isWpLoggedIn && sub.edit_url && (
+                                  <a
+                                    href={getCategoryEditUrl(sub)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="nav-cat-edit-btn is-sub"
+                                    title={`Editar subcategoria "${sub.name}" no WordPress`}
+                                    aria-label={`Editar subcategoria "${sub.name}" no WordPress`}
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                  </svg>
-                                </a>
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      width="10"
+                                      height="10"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                  </a>
+                                )}
+
+                                {hasSubChildren && (
+                                  <button
+                                    type="button"
+                                    className={`nav-dropdown-toggle is-nested ${isSubDropdownOpen ? 'is-open' : ''}`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setOpenSubDropdown(isSubDropdownOpen ? null : sub.id);
+                                    }}
+                                    aria-label={`Subníveis de ${sub.name}`}
+                                    aria-expanded={isSubDropdownOpen}
+                                  >
+                                    ▸
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Submenu Dropdown de Segundo Subnível (Netos) */}
+                              {hasSubChildren && (
+                                <ul className={`nav-dropdown-submenu ${isSubDropdownOpen ? 'is-visible' : ''}`}>
+                                  {sub.children.map((grand) => (
+                                    <li key={grand.id || grand.slug} className="nav-dropdown-item is-grandchild">
+                                      <div className="nav-dropdown-link-group">
+                                        <NavLink
+                                          to={`/${grand.slug}`}
+                                          className={({ isActive }) =>
+                                            `nav-dropdown-link ${isActive ? 'is-active' : ''}`
+                                          }
+                                          onClick={() => {
+                                            setOpenDropdown(null);
+                                            setOpenSubDropdown(null);
+                                            onCloseMenu();
+                                          }}
+                                        >
+                                          <span className="nav-dropdown-bullet">◦</span>
+                                          <span className="nav-dropdown-text">{grand.name}</span>
+                                        </NavLink>
+
+                                        {isWpLoggedIn && grand.edit_url && (
+                                          <a
+                                            href={getCategoryEditUrl(grand)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="nav-cat-edit-btn is-sub"
+                                            title={`Editar categoria "${grand.name}" no WordPress`}
+                                            aria-label={`Editar categoria "${grand.name}" no WordPress`}
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <svg
+                                              viewBox="0 0 24 24"
+                                              width="10"
+                                              height="10"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              strokeWidth="2.2"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                            >
+                                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                          </a>
+                                        )}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
                               )}
-                            </div>
-                          </li>
-                        ))}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </li>
