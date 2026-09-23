@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({
   categories = [],
@@ -13,12 +14,31 @@ export default function Navbar({
     accent: '#6366f1',
   },
 }) {
+  const { isAuthenticated } = useAuth();
   const scrollRef = useRef(null);
   const location = useLocation();
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileSearch, setMobileSearch] = useState('');
+
+  // Verifica se o usuário tem privilégio de edição ou está logado no WordPress
+  const isWpLoggedIn =
+    Boolean(window.EstudoApiConfig?.canEditPosts) ||
+    Boolean(window.EstudoApiConfig?.isLoggedIn) ||
+    Boolean(window.EstudoApiConfig?.isEditMode) ||
+    (typeof document !== 'undefined' && document.body?.classList?.contains('logged-in')) ||
+    isAuthenticated;
+
+  // Monta a URL para tela de edição da categoria no WordPress
+  const getCategoryEditUrl = (c) => {
+    if (c.edit_url) return c.edit_url;
+    const adminBase = window.EstudoApiConfig?.adminUrl
+      ? window.EstudoApiConfig.adminUrl.replace(/\/$/, '')
+      : '/wp-admin';
+    const catId = c.id || c.term_id;
+    return `${adminBase}/term.php?taxonomy=category&tag_ID=${catId}&post_type=post`;
+  };
 
   // Organiza categorias em hierarquia (pais e filhos)
   const categoryTree = React.useMemo(() => {
@@ -203,6 +223,32 @@ export default function Navbar({
                         <span className="nav-text">{cat.name}</span>
                       </NavLink>
 
+                      {isWpLoggedIn && (
+                        <a
+                          href={getCategoryEditUrl(cat)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="nav-cat-edit-btn"
+                          title={`Editar categoria "${cat.name}" no WordPress`}
+                          aria-label={`Editar categoria "${cat.name}" no WordPress`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="11"
+                            height="11"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </a>
+                      )}
+
                       {hasChildren && (
                         <button
                           type="button"
@@ -225,19 +271,47 @@ export default function Navbar({
                       <ul className={`nav-dropdown-menu ${isDropdownOpen ? 'is-visible' : ''}`}>
                         {cat.children.map((sub) => (
                           <li key={sub.id || sub.slug} className="nav-dropdown-item">
-                            <NavLink
-                              to={`/${sub.slug}`}
-                              className={({ isActive }) =>
-                                `nav-dropdown-link ${isActive ? 'is-active' : ''}`
-                              }
-                              onClick={() => {
-                                setOpenDropdown(null);
-                                onCloseMenu();
-                              }}
-                            >
-                              <span className="nav-dropdown-bullet">•</span>
-                              <span className="nav-dropdown-text">{sub.name}</span>
-                            </NavLink>
+                            <div className="nav-dropdown-link-group">
+                              <NavLink
+                                to={`/${sub.slug}`}
+                                className={({ isActive }) =>
+                                  `nav-dropdown-link ${isActive ? 'is-active' : ''}`
+                                }
+                                onClick={() => {
+                                  setOpenDropdown(null);
+                                  onCloseMenu();
+                                }}
+                              >
+                                <span className="nav-dropdown-bullet">•</span>
+                                <span className="nav-dropdown-text">{sub.name}</span>
+                              </NavLink>
+
+                              {isWpLoggedIn && (
+                                <a
+                                  href={getCategoryEditUrl(sub)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="nav-cat-edit-btn is-sub"
+                                  title={`Editar subcategoria "${sub.name}" no WordPress`}
+                                  aria-label={`Editar subcategoria "${sub.name}" no WordPress`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    width="10"
+                                    height="10"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                </a>
+                              )}
+                            </div>
                           </li>
                         ))}
                       </ul>

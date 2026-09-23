@@ -49,6 +49,7 @@ class WPCategoriesModel {
                         'count' => (int) $categorie->count,
                         'parent' => (int) $categorie->parent,
                         'thumbnail' => $category_image,
+                        'edit_url' => admin_url('term.php?taxonomy=' . $categorie->taxonomy . '&tag_ID=' . $categorie->term_id . '&post_type=post'),
                     );
                     $categorie_list[] = $categorie_data;
                 }

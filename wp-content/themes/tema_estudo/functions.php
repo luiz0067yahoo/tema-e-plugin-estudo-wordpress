@@ -281,6 +281,7 @@ function tema_estudo_get_all_categories() {
 			'count'       => (int) $cat->count,
 			'parent'      => (int) $cat->parent,
 			'description' => $cat->description,
+			'edit_url'    => admin_url( 'term.php?taxonomy=category&tag_ID=' . $cat->term_id . '&post_type=post' ),
 		);
 	}
 
