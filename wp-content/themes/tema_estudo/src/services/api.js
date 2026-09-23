@@ -217,6 +217,36 @@ class ApiService {
     ];
   }
 
+  async getTopMenuCategories() {
+    // 1. Tenta obter do objeto injetado pelo WordPress no HTML
+    if (
+      typeof window !== 'undefined' &&
+      Array.isArray(window.EstudoApiConfig?.topMenuCategories) &&
+      window.EstudoApiConfig.topMenuCategories.length > 0
+    ) {
+      return window.EstudoApiConfig.topMenuCategories;
+    }
+
+    // 2. Consulta a rota customizada da API de menu de categorias
+    try {
+      const data = await this.request('menu-categories');
+      const list = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
+      if (list && list.length > 0) return list;
+    } catch {
+      // Ignora e tenta fallback
+    }
+
+    try {
+      const directRes = await fetch(this.buildUrl(this.config.wpRestUrl, 'tema-estudo/v1/menu-categories'));
+      if (directRes.ok) {
+        const list = await directRes.json();
+        if (Array.isArray(list) && list.length > 0) return list;
+      }
+    } catch {}
+
+    return [];
+  }
+
   async getPages(params = {}) {
     const query = new URLSearchParams(params).toString();
     try {

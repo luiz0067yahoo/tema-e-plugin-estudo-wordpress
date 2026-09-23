@@ -88,8 +88,9 @@ function tema_estudo_enqueue_scripts() {
 				'isLoggedIn'   => is_user_logged_in(),
 				'canEditPosts' => current_user_can( 'edit_posts' ),
 				'isEditMode'   => is_customize_preview() || is_user_logged_in() || current_user_can( 'edit_theme_options' ),
-				'categories'   => tema_estudo_get_all_categories(),
-				'themeColors' => array(
+				'categories'        => tema_estudo_get_all_categories(),
+				'topMenuCategories' => tema_estudo_get_top_menu_categories(),
+				'themeColors'       => array(
 					'bgMain'        => get_theme_mod( 'tema_estudo_bg_main', '#0b0f19' ),
 					'bgSurface'     => get_theme_mod( 'tema_estudo_bg_surface', '#111827' ),
 					'bgCard'        => get_theme_mod( 'tema_estudo_bg_card', '#111827' ),
@@ -430,4 +431,126 @@ function tema_estudo_redirect_search() {
 	}
 }
 add_action( 'template_redirect', 'tema_estudo_redirect_search' );
+
+/**
+ * Retorna exclusivamente as categorias presentes no Menu Superior (Menu Topo) do WordPress.
+ * Respeita a ordem personalizada de arrastar e soltar e a hierarquia (subitens) configurada no WP Admin.
+ *
+ * @return array Lista estruturada com as categorias presentes no menu topo.
+ */
+function tema_estudo_get_top_menu_categories() {
+	$locations = get_nav_menu_locations();
+	$menu_id   = 0;
+
+	// 1. Tenta obter o menu atribuído à localização 'primary' (Menu Superior / Navbar Categorias)
+	if ( ! empty( $locations['primary'] ) ) {
+		$menu_id = (int) $locations['primary'];
+	} else {
+		// 2. Se nenhuma localização foi associada, busca por menus com nomes sugestivos ou o primeiro menu existente
+		$menus = wp_get_nav_menus();
+		if ( ! empty( $menus ) ) {
+			foreach ( $menus as $m ) {
+				$name_slug = strtolower( $m->slug . ' ' . $m->name );
+				if (
+					strpos( $name_slug, 'topo' ) !== false ||
+					strpos( $name_slug, 'superior' ) !== false ||
+					strpos( $name_slug, 'header' ) !== false ||
+					strpos( $name_slug, 'navbar' ) !== false ||
+					strpos( $name_slug, 'principal' ) !== false ||
+					strpos( $name_slug, 'primary' ) !== false
+				) {
+					$menu_id = (int) $m->term_id;
+					break;
+				}
+			}
+			if ( ! $menu_id && ! empty( $menus[0]->term_id ) ) {
+				$menu_id = (int) $menus[0]->term_id;
+			}
+		}
+	}
+
+	if ( ! $menu_id ) {
+		return array();
+	}
+
+	$items = wp_get_nav_menu_items( $menu_id );
+	if ( empty( $items ) || is_wp_error( $items ) ) {
+		return array();
+	}
+
+	$menu_categories   = array();
+	$seen_cat_ids      = array();
+	$menu_id_to_cat_id = array();
+
+	foreach ( $items as $item ) {
+		$cat = null;
+
+		// A. Item do tipo Categoria nativa do WordPress
+		if ( 'category' === $item->object || ( 'taxonomy' === $item->type && 'category' === $item->object ) ) {
+			$cat = get_term( (int) $item->object_id, 'category' );
+		} elseif ( 'custom' === $item->type && ! empty( $item->url ) ) {
+			// B. Item como link customizado apontando para a URL de uma categoria
+			$path     = trim( (string) wp_parse_url( $item->url, PHP_URL_PATH ), '/' );
+			$segments = explode( '/', $path );
+			$slug     = end( $segments );
+			if ( $slug ) {
+				$cat_by_slug = get_term_by( 'slug', $slug, 'category' );
+				if ( $cat_by_slug && ! is_wp_error( $cat_by_slug ) ) {
+					$cat = $cat_by_slug;
+				}
+			}
+		}
+
+		if ( $cat && ! is_wp_error( $cat ) && empty( $seen_cat_ids[ $cat->term_id ] ) ) {
+			$cat_id = (int) $cat->term_id;
+			$seen_cat_ids[ $cat_id ] = true;
+			$menu_id_to_cat_id[ (int) $item->ID ] = $cat_id;
+
+			$menu_categories[] = array(
+				'id'           => $cat_id,
+				'name'         => ! empty( $item->title ) ? $item->title : $cat->name,
+				'slug'         => $cat->slug,
+				'count'        => (int) $cat->count,
+				'parent'       => (int) $cat->parent,
+				'menu_item_id' => (int) $item->ID,
+				'menu_parent'  => (int) $item->menu_item_parent,
+				'menu_order'   => (int) $item->menu_order,
+				'description'  => $cat->description,
+				'edit_url'     => admin_url( 'term.php?taxonomy=category&tag_ID=' . $cat_id . '&post_type=post' ),
+			);
+		}
+	}
+
+	// Mapeia hierarquia do menu (se um item foi indentado dentro de outro no WordPress)
+	for ( $i = 0; $i < count( $menu_categories ); $i++ ) {
+		$mp = $menu_categories[ $i ]['menu_parent'];
+		if ( $mp > 0 && isset( $menu_id_to_cat_id[ $mp ] ) ) {
+			$menu_categories[ $i ]['parent'] = $menu_id_to_cat_id[ $mp ];
+		}
+	}
+
+	return $menu_categories;
+}
+
+/**
+ * Registra rotas REST para consultar as categorias presentes no menu topo
+ */
+function tema_estudo_register_menu_categories_rest_routes() {
+	register_rest_route( 'api/v1', '/menu-categories', array(
+		'methods'             => WP_REST_Server::READABLE,
+		'callback'            => function () {
+			return rest_ensure_response( tema_estudo_get_top_menu_categories() );
+		},
+		'permission_callback' => '__return_true',
+	) );
+	register_rest_route( 'tema-estudo/v1', '/menu-categories', array(
+		'methods'             => WP_REST_Server::READABLE,
+		'callback'            => function () {
+			return rest_ensure_response( tema_estudo_get_top_menu_categories() );
+		},
+		'permission_callback' => '__return_true',
+	) );
+}
+add_action( 'rest_api_init', 'tema_estudo_register_menu_categories_rest_routes' );
+
 

@@ -1,9 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function Navbar({
   categories = [],
+  topMenuCategories: propTopMenuCategories,
   isMenuOpen = false,
   onCloseMenu = () => { },
   config = {
@@ -22,6 +24,53 @@ export default function Navbar({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileSearch, setMobileSearch] = useState('');
+
+  // Estado para armazenar exclusivamente as categorias presentes no menu topo do WordPress
+  const [topMenuCategories, setTopMenuCategories] = useState(() => {
+    if (propTopMenuCategories && propTopMenuCategories.length > 0) {
+      return propTopMenuCategories;
+    }
+    if (
+      typeof window !== 'undefined' &&
+      Array.isArray(window.EstudoApiConfig?.topMenuCategories) &&
+      window.EstudoApiConfig.topMenuCategories.length > 0
+    ) {
+      return window.EstudoApiConfig.topMenuCategories;
+    }
+    return null;
+  });
+
+  // Busca assíncrona caso não tenha sido injetado no HTML via SSR/wp_localize_script
+  useEffect(() => {
+    if (propTopMenuCategories && propTopMenuCategories.length > 0) {
+      setTopMenuCategories(propTopMenuCategories);
+      return;
+    }
+    if (
+      typeof window !== 'undefined' &&
+      Array.isArray(window.EstudoApiConfig?.topMenuCategories) &&
+      window.EstudoApiConfig.topMenuCategories.length > 0
+    ) {
+      setTopMenuCategories(window.EstudoApiConfig.topMenuCategories);
+      return;
+    }
+
+    api.getTopMenuCategories().then((menuCats) => {
+      if (menuCats && menuCats.length > 0) {
+        setTopMenuCategories(menuCats);
+      }
+    });
+  }, [propTopMenuCategories]);
+
+  // Lista efetiva para a Navbar:
+  // Se houver categorias configuradas no menu topo do WordPress, exibe SOMENTE elas (na ordem do menu).
+  // Caso nenhum menu tenha sido criado no WordPress ainda, usa as categorias gerais como fallback.
+  const displayCategories = React.useMemo(() => {
+    if (topMenuCategories && topMenuCategories.length > 0) {
+      return topMenuCategories;
+    }
+    return categories;
+  }, [topMenuCategories, categories]);
 
   // Verifica se o usuário tem privilégio de edição ou está logado no WordPress
   const isWpLoggedIn =
@@ -43,17 +92,17 @@ export default function Navbar({
 
   // Organiza categorias em hierarquia (pais e filhos)
   const categoryTree = React.useMemo(() => {
-    if (!categories || categories.length === 0) return [];
+    if (!displayCategories || displayCategories.length === 0) return [];
 
-    const hasHierarchy = categories.some((c) => c.parent && c.parent > 0);
+    const hasHierarchy = displayCategories.some((c) => c.parent && c.parent > 0);
     if (!hasHierarchy) {
       // Todas planas
-      return categories.map((cat) => ({ ...cat, children: [] }));
+      return displayCategories.map((cat) => ({ ...cat, children: [] }));
     }
 
-    const parents = categories.filter((c) => !c.parent || c.parent === 0);
+    const parents = displayCategories.filter((c) => !c.parent || c.parent === 0);
     const childrenMap = {};
-    categories.forEach((c) => {
+    displayCategories.forEach((c) => {
       if (c.parent && c.parent > 0) {
         if (!childrenMap[c.parent]) childrenMap[c.parent] = [];
         childrenMap[c.parent].push(c);
@@ -64,7 +113,7 @@ export default function Navbar({
       ...parent,
       children: childrenMap[parent.id] || [],
     }));
-  }, [categories]);
+  }, [displayCategories]);
 
   // Monitora rolagem horizontal no desktop
   const checkScroll = () => {
@@ -79,7 +128,7 @@ export default function Navbar({
     checkScroll();
     window.addEventListener('resize', checkScroll);
     return () => window.removeEventListener('resize', checkScroll);
-  }, [categories]);
+  }, [displayCategories]);
 
   // Auto-scroll do item ativo para o centro da barra visível
   useEffect(() => {
@@ -88,7 +137,7 @@ export default function Navbar({
     if (activeEl) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-  }, [location.pathname, categories]);
+  }, [location.pathname, displayCategories]);
 
   const handleScroll = (direction) => {
     if (!scrollRef.current) return;
@@ -113,7 +162,7 @@ export default function Navbar({
   }, [categoryTree, mobileSearch]);
 
   // Exibe skeleton se ainda estiver carregando
-  if (!categories || categories.length === 0) {
+  if (!displayCategories || displayCategories.length === 0) {
     return (
       <nav
         className={`react-navbar ${styleClass} ${alignClass} ${stickyClass} ${isMenuOpen ? 'is-open' : ''}`}
@@ -166,7 +215,7 @@ export default function Navbar({
           <div className="navbar-mobile-header">
             <div className="navbar-mobile-title-wrap">
               <span className="navbar-mobile-icon">🏷️</span>
-              <span className="navbar-mobile-title">Todas as Categorias</span>
+              <span className="navbar-mobile-title">Categorias</span>
             </div>
             <button
               type="button"

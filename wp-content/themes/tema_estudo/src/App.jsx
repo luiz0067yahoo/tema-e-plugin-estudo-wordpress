@@ -171,6 +171,7 @@ export default function App() {
 
         <Navbar
           categories={categories}
+          topMenuCategories={window.EstudoApiConfig?.topMenuCategories}
           isMenuOpen={isMenuOpen}
           onCloseMenu={() => setIsMenuOpen(false)}
           config={navbarConfig}
