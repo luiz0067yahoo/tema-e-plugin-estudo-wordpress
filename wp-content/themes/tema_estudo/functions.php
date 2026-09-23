@@ -89,6 +89,15 @@ function tema_estudo_enqueue_scripts() {
 				'canEditPosts' => current_user_can( 'edit_posts' ),
 				'isEditMode'   => is_customize_preview() || is_user_logged_in() || current_user_can( 'edit_theme_options' ),
 				'categories'   => tema_estudo_get_all_categories(),
+				'themeColors' => array(
+					'bgMain'        => get_theme_mod( 'tema_estudo_bg_main', '#0b0f19' ),
+					'bgSurface'     => get_theme_mod( 'tema_estudo_bg_surface', '#111827' ),
+					'bgCard'        => get_theme_mod( 'tema_estudo_bg_card', '#111827' ),
+					'textPrimary'   => get_theme_mod( 'tema_estudo_text_primary', '#f8fafc' ),
+					'textSecondary' => get_theme_mod( 'tema_estudo_text_secondary', '#94a3b8' ),
+					'primary'       => get_theme_mod( 'tema_estudo_primary_color', '#6366f1' ),
+					'accent'        => get_theme_mod( 'tema_estudo_accent_color', '#06b6d4' ),
+				),
 				'navbar'      => array(
 					'style'     => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
 					'align'     => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
@@ -104,9 +113,121 @@ function tema_estudo_enqueue_scripts() {
 add_action( 'wp_enqueue_scripts', 'tema_estudo_enqueue_scripts' );
 
 /**
- * Registrar opções de personalização da Navbar no WordPress Customizer
+ * Injeta variáveis CSS no <head> para as cores customizadas do tema
+ */
+function tema_estudo_output_theme_colors_css() {
+	$bg_main        = get_theme_mod( 'tema_estudo_bg_main', '#0b0f19' );
+	$bg_surface     = get_theme_mod( 'tema_estudo_bg_surface', '#111827' );
+	$bg_card        = get_theme_mod( 'tema_estudo_bg_card', '#111827' );
+	$text_primary   = get_theme_mod( 'tema_estudo_text_primary', '#f8fafc' );
+	$text_secondary = get_theme_mod( 'tema_estudo_text_secondary', '#94a3b8' );
+	$primary        = get_theme_mod( 'tema_estudo_primary_color', '#6366f1' );
+	$accent         = get_theme_mod( 'tema_estudo_accent_color', '#06b6d4' );
+
+	echo "<style id=\"tema-estudo-custom-theme-colors\">\n";
+	echo ":root {\n";
+	if ( $bg_main )        echo "  --bg-main: " . esc_attr( $bg_main ) . ";\n";
+	if ( $bg_surface )     echo "  --bg-surface: " . esc_attr( $bg_surface ) . ";\n";
+	if ( $bg_card )        echo "  --bg-card: " . esc_attr( $bg_card ) . ";\n";
+	if ( $text_primary )   echo "  --text-primary: " . esc_attr( $text_primary ) . ";\n";
+	if ( $text_secondary ) echo "  --text-secondary: " . esc_attr( $text_secondary ) . ";\n";
+	if ( $primary ) {
+		echo "  --primary: " . esc_attr( $primary ) . ";\n";
+		echo "  --border-focus: " . esc_attr( $primary ) . "80;\n";
+		echo "  --shadow-glow: 0 0 28px " . esc_attr( $primary ) . "40;\n";
+	}
+	if ( $accent )         echo "  --accent: " . esc_attr( $accent ) . ";\n";
+	echo "}\n";
+	echo "</style>\n";
+}
+add_action( 'wp_head', 'tema_estudo_output_theme_colors_css', 100 );
+
+/**
+ * Registrar opções de personalização da Navbar e Cores do Tema no WordPress Customizer
  */
 function tema_estudo_customize_register( $wp_customize ) {
+	// ==========================================
+	// 1. SEÇÃO: Cores Gerais do Tema
+	// ==========================================
+	$wp_customize->add_section( 'tema_estudo_theme_colors_section', array(
+		'title'       => __( 'Cores Gerais do Tema', 'tema_estudo' ),
+		'priority'    => 25,
+		'description' => __( 'Personalize o fundo principal, cabeçalho/superfície, cards de posts, textos e cores de destaque.', 'tema_estudo' ),
+	) );
+
+	// 1.1 Cor de Fundo Principal (Body)
+	$wp_customize->add_setting( 'tema_estudo_bg_main', array(
+		'default'           => '#0b0f19',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_bg_main', array(
+		'label'    => __( 'Cor de Fundo Principal (Geral / Body)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.2 Cor de Superfície (Header / Rodapé)
+	$wp_customize->add_setting( 'tema_estudo_bg_surface', array(
+		'default'           => '#111827',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_bg_surface', array(
+		'label'    => __( 'Cor de Superfície (Cabeçalho / Rodapé)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.3 Cor de Fundo dos Cards
+	$wp_customize->add_setting( 'tema_estudo_bg_card', array(
+		'default'           => '#111827',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_bg_card', array(
+		'label'    => __( 'Cor de Fundo dos Cards de Posts e Produtos', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.4 Cor do Texto Principal
+	$wp_customize->add_setting( 'tema_estudo_text_primary', array(
+		'default'           => '#f8fafc',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_text_primary', array(
+		'label'    => __( 'Cor do Texto Principal (Títulos e Conteúdo)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.5 Cor do Texto Secundário
+	$wp_customize->add_setting( 'tema_estudo_text_secondary', array(
+		'default'           => '#94a3b8',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_text_secondary', array(
+		'label'    => __( 'Cor do Texto Secundário (Descrições e Metas)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.6 Cor Primária / Destaques
+	$wp_customize->add_setting( 'tema_estudo_primary_color', array(
+		'default'           => '#6366f1',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_primary_color', array(
+		'label'    => __( 'Cor Primária (Botões de Ação e Destaques)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// 1.7 Cor de Acento Secundária
+	$wp_customize->add_setting( 'tema_estudo_accent_color', array(
+		'default'           => '#06b6d4',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_accent_color', array(
+		'label'    => __( 'Cor de Acento Secundária (Gradientes e Detalhes)', 'tema_estudo' ),
+		'section'  => 'tema_estudo_theme_colors_section',
+	) ) );
+
+	// ==========================================
+	// 2. SEÇÃO: Personalização da Navbar
+	// ==========================================
 	$wp_customize->add_section( 'tema_estudo_navbar_section', array(
 		'title'       => __( 'Personalização da Navbar', 'tema_estudo' ),
 		'priority'    => 30,
