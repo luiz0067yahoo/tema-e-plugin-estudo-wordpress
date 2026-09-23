@@ -350,7 +350,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
    ========================================================================== */
 
 .react-navbar {
-  background: rgba(17, 24, 39, 0.85);
+  background: var(--nav-bg, rgba(17, 24, 39, 0.85));
   border-bottom: 1px solid var(--border-subtle);
   transition: var(--transition);
   position: relative;
@@ -361,6 +361,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
   position: relative;
   top: auto;
   z-index: 1;
+  background: var(--nav-bg, rgba(17, 24, 39, 0.85));
   backdrop-filter: blur(14px);
 }
 
@@ -489,7 +490,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
 .nav-dropdown-toggle {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--nav-text, var(--text-muted));
   cursor: pointer;
   padding: 6px 6px;
   border-radius: var(--radius-sm);
@@ -512,7 +513,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
   top: calc(100% + 6px);
   left: 0;
   min-width: 190px;
-  background: rgba(17, 24, 39, 0.95);
+  background: var(--nav-bg, rgba(17, 24, 39, 0.95));
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -544,7 +545,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
   gap: 8px;
   padding: 8px 12px;
   font-size: 0.84rem;
-  color: var(--text-secondary);
+  color: var(--nav-text, var(--text-secondary));
   border-radius: var(--radius-sm);
   transition: var(--transition);
   text-decoration: none;
@@ -610,7 +611,7 @@ body.admin-bar .site-top-wrapper.is-sticky {
   padding: 8px 16px;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--nav-text, var(--text-secondary));
   white-space: nowrap;
   transition: var(--transition);
   position: relative;
@@ -1370,7 +1371,7 @@ details.wp-block-details summary {
     max-width: 85vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    background: #0f172a !important;
+    background: var(--nav-bg, #0f172a) !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease !important;
     z-index: 1000 !important;
@@ -1766,6 +1767,30 @@ body:not(.logged-in):not(.customize-preview):not(.is-admin-preview) .customizer-
   letter-spacing: 0.06em;
   color: var(--text-secondary);
   margin-bottom: 12px;
+}
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-label-row .section-label {
+  margin-bottom: 0;
+}
+
+.color-value-badge {
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
 }
 
 /* 1. Estilos Grid */

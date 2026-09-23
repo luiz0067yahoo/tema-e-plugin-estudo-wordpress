@@ -16,6 +16,8 @@ const DEFAULT_NAVBAR_CONFIG = {
   align: 'left',
   sticky: true,
   accent: '#6366f1',
+  bgColor: '#111827',
+  textColor: '#94a3b8',
 };
 
 const getInitialNavbarConfig = () => {

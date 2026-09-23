@@ -1,12 +1,30 @@
 import React, { useState } from 'react';
 
-const PRESET_COLORS = [
+const PRESET_ACCENTS = [
   { name: 'Índigo', value: '#6366f1' },
   { name: 'Ciano', value: '#06b6d4' },
   { name: 'Esmeralda', value: '#10b981' },
   { name: 'Rosa Neon', value: '#ec4899' },
   { name: 'Âmbar', value: '#f59e0b' },
   { name: 'Violeta', value: '#8b5cf6' },
+];
+
+const PRESET_BG_COLORS = [
+  { name: 'Escuro Padrão', value: '#111827' },
+  { name: 'Ardósia', value: '#1e293b' },
+  { name: 'Noite Profunda', value: '#0f172a' },
+  { name: 'Preto Total', value: '#000000' },
+  { name: 'Roxo Noturno', value: '#1e1b4b' },
+  { name: 'Claro Clean', value: '#ffffff' },
+];
+
+const PRESET_TEXT_COLORS = [
+  { name: 'Cinza Médio (Padrão)', value: '#94a3b8' },
+  { name: 'Branco Puro', value: '#ffffff' },
+  { name: 'Cinza Claro', value: '#cbd5e1' },
+  { name: 'Ciano Pastel', value: '#67e8f9' },
+  { name: 'Menta', value: '#6ee7b7' },
+  { name: 'Dourado Suave', value: '#fde047' },
 ];
 
 export const isEditModeActive = () => {
@@ -150,11 +168,78 @@ export default function NavbarCustomizer({ config, onUpdateConfig, onResetConfig
                 </div>
               </div>
 
-              {/* 4. Cores de Destaque */}
+              {/* 4. Cor do Fundo */}
               <div className="customizer-section">
-                <label className="section-label">Cor de Destaque (Accent)</label>
+                <div className="section-label-row">
+                  <label className="section-label">Cor do Fundo da Navbar</label>
+                  <span className="color-value-badge">{config.bgColor || '#111827'}</span>
+                </div>
                 <div className="color-palette">
-                  {PRESET_COLORS.map((color) => (
+                  {PRESET_BG_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      className={`color-swatch ${config.bgColor === color.value ? 'is-active' : ''}`}
+                      style={{
+                        backgroundColor: color.value,
+                        border: color.value === '#ffffff' ? '1px solid #94a3b8' : undefined,
+                      }}
+                      onClick={() => onUpdateConfig({ bgColor: color.value })}
+                      title={color.name}
+                    />
+                  ))}
+                  <div className="color-input-wrap">
+                    <input
+                      type="color"
+                      value={config.bgColor || '#111827'}
+                      onChange={(e) => onUpdateConfig({ bgColor: e.target.value })}
+                      className="native-color-picker"
+                      title="Escolher cor personalizada de fundo"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Cor do Texto */}
+              <div className="customizer-section">
+                <div className="section-label-row">
+                  <label className="section-label">Cor do Texto dos Links</label>
+                  <span className="color-value-badge">{config.textColor || '#94a3b8'}</span>
+                </div>
+                <div className="color-palette">
+                  {PRESET_TEXT_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      type="button"
+                      className={`color-swatch ${config.textColor === color.value ? 'is-active' : ''}`}
+                      style={{
+                        backgroundColor: color.value,
+                        border: color.value === '#ffffff' ? '1px solid #94a3b8' : undefined,
+                      }}
+                      onClick={() => onUpdateConfig({ textColor: color.value })}
+                      title={color.name}
+                    />
+                  ))}
+                  <div className="color-input-wrap">
+                    <input
+                      type="color"
+                      value={config.textColor || '#94a3b8'}
+                      onChange={(e) => onUpdateConfig({ textColor: e.target.value })}
+                      className="native-color-picker"
+                      title="Escolher cor personalizada de texto"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. Cores de Destaque */}
+              <div className="customizer-section">
+                <div className="section-label-row">
+                  <label className="section-label">Cor de Destaque (Accent)</label>
+                  <span className="color-value-badge">{config.accent || '#6366f1'}</span>
+                </div>
+                <div className="color-palette">
+                  {PRESET_ACCENTS.map((color) => (
                     <button
                       key={color.value}
                       type="button"
@@ -167,10 +252,10 @@ export default function NavbarCustomizer({ config, onUpdateConfig, onResetConfig
                   <div className="color-input-wrap">
                     <input
                       type="color"
-                      value={config.accent}
+                      value={config.accent || '#6366f1'}
                       onChange={(e) => onUpdateConfig({ accent: e.target.value })}
                       className="native-color-picker"
-                      title="Escolher cor personalizada"
+                      title="Escolher cor personalizada de destaque"
                     />
                   </div>
                 </div>

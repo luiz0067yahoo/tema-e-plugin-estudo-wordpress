@@ -90,10 +90,12 @@ function tema_estudo_enqueue_scripts() {
 				'isEditMode'   => is_customize_preview() || is_user_logged_in() || current_user_can( 'edit_theme_options' ),
 				'categories'   => tema_estudo_get_all_categories(),
 				'navbar'      => array(
-					'style'  => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
-					'align'  => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
-					'sticky' => (bool) get_theme_mod( 'tema_estudo_navbar_sticky', true ),
-					'accent' => get_theme_mod( 'tema_estudo_navbar_accent', '#6366f1' ),
+					'style'     => get_theme_mod( 'tema_estudo_navbar_style', 'pill' ),
+					'align'     => get_theme_mod( 'tema_estudo_navbar_align', 'left' ),
+					'sticky'    => (bool) get_theme_mod( 'tema_estudo_navbar_sticky', true ),
+					'accent'    => get_theme_mod( 'tema_estudo_navbar_accent', '#6366f1' ),
+					'bgColor'   => get_theme_mod( 'tema_estudo_navbar_bg_color', '#111827' ),
+					'textColor' => get_theme_mod( 'tema_estudo_navbar_text_color', '#94a3b8' ),
 				),
 			)
 		);
@@ -162,6 +164,26 @@ function tema_estudo_customize_register( $wp_customize ) {
 	) );
 	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_navbar_accent', array(
 		'label'    => __( 'Cor de Destaque da Navbar', 'tema_estudo' ),
+		'section'  => 'tema_estudo_navbar_section',
+	) ) );
+
+	// 5. Cor de Fundo da Navbar (Background)
+	$wp_customize->add_setting( 'tema_estudo_navbar_bg_color', array(
+		'default'           => '#111827',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_navbar_bg_color', array(
+		'label'    => __( 'Cor de Fundo da Navbar', 'tema_estudo' ),
+		'section'  => 'tema_estudo_navbar_section',
+	) ) );
+
+	// 6. Cor do Texto dos Links da Navbar (Text Color)
+	$wp_customize->add_setting( 'tema_estudo_navbar_text_color', array(
+		'default'           => '#94a3b8',
+		'sanitize_callback' => 'sanitize_hex_color',
+	) );
+	$wp_customize->add_control( new WP_Customize_Color_Control( $wp_customize, 'tema_estudo_navbar_text_color', array(
+		'label'    => __( 'Cor do Texto dos Links da Navbar', 'tema_estudo' ),
 		'section'  => 'tema_estudo_navbar_section',
 	) ) );
 }

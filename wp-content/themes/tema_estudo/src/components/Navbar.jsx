@@ -11,6 +11,8 @@ export default function Navbar({
     align: 'left',
     sticky: true,
     accent: '#6366f1',
+    bgColor: '#111827',
+    textColor: '#94a3b8',
   },
 }) {
   const { isAuthenticated } = useAuth();
@@ -115,7 +117,11 @@ export default function Navbar({
     return (
       <nav
         className={`react-navbar ${styleClass} ${alignClass} ${stickyClass} ${isMenuOpen ? 'is-open' : ''}`}
-        style={{ '--nav-accent': config.accent || '#6366f1' }}
+        style={{
+          '--nav-accent': config.accent || '#6366f1',
+          '--nav-bg': config.bgColor || '#111827',
+          '--nav-text': config.textColor || '#94a3b8',
+        }}
         aria-label="Menu de Categorias"
       >
         <div className="navbar-container">
@@ -138,6 +144,8 @@ export default function Navbar({
           }`}
         style={{
           '--nav-accent': config.accent || '#6366f1',
+          '--nav-bg': config.bgColor || '#111827',
+          '--nav-text': config.textColor || '#94a3b8',
         }}
         aria-label="Menu de Categorias"
       >
