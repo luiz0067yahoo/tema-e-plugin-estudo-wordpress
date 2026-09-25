@@ -166,7 +166,10 @@ export default function FeedPage({ categories = [] }) {
                     {isProduct && <span className="meta-badge">Produto</span>}
                     {singleDateFormatted && <span className="meta-date">Publicado em: {singleDateFormatted}</span>}
                   </div>
-                  <h1 className="article-title">{singleTitle}</h1>
+                  <div className="article-title-row">
+                    <h1 className="article-title">{singleTitle}</h1>
+                    <EditPostButton postId={single.id || single.ID} editUrl={single.edit_url} title={singleTitle} className="is-inline" />
+                  </div>
                   {price && (
                     <div className="article-price-tag">
                       <span>Preço: </span>

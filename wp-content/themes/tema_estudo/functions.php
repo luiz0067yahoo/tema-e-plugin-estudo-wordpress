@@ -481,27 +481,46 @@ function tema_estudo_get_top_menu_categories() {
 	$menu_items_map = array();
 
 	foreach ( $items as $item ) {
-		$cat  = null;
-		$slug = '';
+		$cat      = null;
+		$slug     = '';
+		$edit_url = '';
+		$is_page  = false;
 
 		// A. Item do tipo Categoria nativa do WordPress
 		if ( 'category' === $item->object || ( 'taxonomy' === $item->type && 'category' === $item->object ) ) {
 			$cat = get_term( (int) $item->object_id, 'category' );
 			if ( $cat && ! is_wp_error( $cat ) ) {
-				$slug = $cat->slug;
+				$slug     = $cat->slug;
+				$edit_url = admin_url( 'term.php?taxonomy=category&tag_ID=' . (int) $cat->term_id . '&post_type=post' );
+			}
+		} elseif ( 'page' === $item->object || 'post' === $item->object ) {
+			// B. Item do tipo Página ou Post no menu
+			$post_obj = get_post( (int) $item->object_id );
+			if ( $post_obj && ! is_wp_error( $post_obj ) ) {
+				$slug     = $post_obj->post_name;
+				$edit_url = admin_url( 'post.php?post=' . $post_obj->ID . '&action=edit' );
+				$is_page  = ( 'page' === $item->object );
 			}
 		} elseif ( ! empty( $item->url ) ) {
-			// B. Item como link customizado apontando para a URL de uma categoria ou página
+			// C. Item como link customizado apontando para a URL de uma categoria ou página
 			$path     = trim( (string) wp_parse_url( $item->url, PHP_URL_PATH ), '/' );
 			$segments = explode( '/', $path );
 			$last_seg = end( $segments );
 			if ( $last_seg ) {
 				$cat_by_slug = get_term_by( 'slug', $last_seg, 'category' );
 				if ( $cat_by_slug && ! is_wp_error( $cat_by_slug ) ) {
-					$cat  = $cat_by_slug;
-					$slug = $cat_by_slug->slug;
+					$cat      = $cat_by_slug;
+					$slug     = $cat_by_slug->slug;
+					$edit_url = admin_url( 'term.php?taxonomy=category&tag_ID=' . (int) $cat->term_id . '&post_type=post' );
 				} else {
-					$slug = sanitize_title( $last_seg );
+					$page_by_slug = get_page_by_path( $last_seg );
+					if ( $page_by_slug && ! is_wp_error( $page_by_slug ) ) {
+						$slug     = $page_by_slug->post_name;
+						$edit_url = admin_url( 'post.php?post=' . $page_by_slug->ID . '&action=edit' );
+						$is_page  = true;
+					} else {
+						$slug = sanitize_title( $last_seg );
+					}
 				}
 			}
 		}
@@ -510,7 +529,7 @@ function tema_estudo_get_top_menu_categories() {
 			$slug = sanitize_title( $item->title );
 		}
 
-		$cat_id = ( $cat && ! is_wp_error( $cat ) ) ? (int) $cat->term_id : (int) $item->ID;
+		$cat_id = ( $cat && ! is_wp_error( $cat ) ) ? (int) $cat->term_id : (int) $item->object_id;
 		$name   = ! empty( $item->title ) ? $item->title : ( ( $cat && ! is_wp_error( $cat ) ) ? $cat->name : 'Item' );
 
 		$menu_items_map[ (int) $item->ID ] = array(
@@ -523,7 +542,8 @@ function tema_estudo_get_top_menu_categories() {
 			'menu_parent'  => (int) $item->menu_item_parent,
 			'menu_order'   => (int) $item->menu_order,
 			'description'  => ( $cat && ! is_wp_error( $cat ) ) ? $cat->description : '',
-			'edit_url'     => ( $cat && ! is_wp_error( $cat ) ) ? admin_url( 'term.php?taxonomy=category&tag_ID=' . $cat_id . '&post_type=post' ) : '',
+			'edit_url'     => $edit_url,
+			'is_page'      => $is_page,
 			'children'     => array(),
 		);
 	}

@@ -81,13 +81,16 @@ export default function Navbar({
     (typeof document !== 'undefined' && document.body?.classList?.contains('logged-in')) ||
     isAuthenticated;
 
-  // Monta a URL para tela de edição da categoria no WordPress
+  // Monta a URL para tela de edição da categoria ou página no WordPress
   const getCategoryEditUrl = (c) => {
     if (c.edit_url) return c.edit_url;
     const adminBase = window.EstudoApiConfig?.adminUrl
       ? window.EstudoApiConfig.adminUrl.replace(/\/$/, '')
       : '/wp-admin';
     const catId = c.id || c.term_id;
+    if (c.is_page) {
+      return `${adminBase}/post.php?post=${catId}&action=edit`;
+    }
     return `${adminBase}/term.php?taxonomy=category&tag_ID=${catId}&post_type=post`;
   };
 
@@ -310,8 +313,8 @@ export default function Navbar({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="nav-cat-edit-btn"
-                          title={`Editar categoria "${cat.name}" no WordPress`}
-                          aria-label={`Editar categoria "${cat.name}" no WordPress`}
+                          title={`Editar ${cat.is_page ? 'página' : 'categoria'} "${cat.name}" no WordPress`}
+                          aria-label={`Editar ${cat.is_page ? 'página' : 'categoria'} "${cat.name}" no WordPress`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <svg
@@ -391,8 +394,8 @@ export default function Navbar({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="nav-cat-edit-btn is-sub"
-                                    title={`Editar subcategoria "${sub.name}" no WordPress`}
-                                    aria-label={`Editar subcategoria "${sub.name}" no WordPress`}
+                                    title={`Editar ${sub.is_page ? 'página' : 'subcategoria'} "${sub.name}" no WordPress`}
+                                    aria-label={`Editar ${sub.is_page ? 'página' : 'subcategoria'} "${sub.name}" no WordPress`}
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <svg
@@ -455,8 +458,8 @@ export default function Navbar({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="nav-cat-edit-btn is-sub"
-                                            title={`Editar categoria "${grand.name}" no WordPress`}
-                                            aria-label={`Editar categoria "${grand.name}" no WordPress`}
+                                            title={`Editar ${grand.is_page ? 'página' : 'categoria'} "${grand.name}" no WordPress`}
+                                            aria-label={`Editar ${grand.is_page ? 'página' : 'categoria'} "${grand.name}" no WordPress`}
                                             onClick={(e) => e.stopPropagation()}
                                           >
                                             <svg

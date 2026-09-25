@@ -20,12 +20,20 @@ export default function SingleItemPage({ categories = [] }) {
       try {
         const postsRes = await api.getPosts({ slug: itemSlug });
         const list = Array.isArray(postsRes) ? postsRes : [];
-        const found =
+        let found =
           list.find((p) => p.slug === itemSlug || p.post_name === itemSlug || String(p.id) === itemSlug) ||
           list[0];
 
         if (!found) {
-          throw new Error('Publicação ou produto não encontrado.');
+          const pagesRes = await api.getPages({ slug: itemSlug });
+          const pagesList = Array.isArray(pagesRes) ? pagesRes : [];
+          found =
+            pagesList.find((p) => p.slug === itemSlug || p.post_name === itemSlug || String(p.id) === itemSlug) ||
+            pagesList[0];
+        }
+
+        if (!found) {
+          throw new Error('Publicação ou página não encontrada.');
         }
 
         if (isMounted) {
@@ -106,7 +114,10 @@ export default function SingleItemPage({ categories = [] }) {
           {isProduct && <span className="meta-badge">Produto</span>}
           <span className="meta-date">Publicado em: {dateFormatted}</span>
         </div>
-        <h1 className="article-title">{title}</h1>
+        <div className="article-title-row">
+          <h1 className="article-title">{title}</h1>
+          <EditPostButton postId={item.id || item.ID} editUrl={item.edit_url} title={title} className="is-inline" />
+        </div>
         {price && (
           <div className="article-price-tag">
             <span>Preço: </span>

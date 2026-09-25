@@ -1,7 +1,12 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export default function EditPostButton({ postId, editUrl, title = 'Editar post' }) {
+export default function EditPostButton({
+  postId,
+  editUrl,
+  title = 'Editar',
+  className = '',
+}) {
   const { isAuthenticated } = useAuth();
 
   // O botão só deve aparecer se o usuário estiver logado no WordPress
@@ -23,12 +28,14 @@ export default function EditPostButton({ postId, editUrl, title = 'Editar post' 
       ? `${window.EstudoApiConfig.adminUrl.replace(/\/$/, '')}/post.php?post=${postId}&action=edit`
       : `/wp-admin/post.php?post=${postId}&action=edit`);
 
+  const btnClasses = ['post-thumb-edit-btn', className].filter(Boolean).join(' ');
+
   return (
     <a
       href={resolvedUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="post-thumb-edit-btn"
+      className={btnClasses}
       title={`Editar "${title}" no WordPress`}
       aria-label={`Editar "${title}" no WordPress`}
       onClick={(e) => {

@@ -54,9 +54,19 @@ export default function PostCard({ item, categorySlug }) {
       </div>
 
       <div className="card-body">
-        <h3 className="card-title">
-          <Link to={targetLink}>{title}</Link>
-        </h3>
+        <div className="card-title-row">
+          <h3 className="card-title">
+            <Link to={targetLink}>{title}</Link>
+          </h3>
+          {!thumbUrl && (
+            <EditPostButton
+              postId={itemId}
+              editUrl={item.edit_url}
+              title={title}
+              className="is-inline card-inline-edit"
+            />
+          )}
+        </div>
 
         {excerpt && <p className="card-excerpt">{excerpt}</p>}
 

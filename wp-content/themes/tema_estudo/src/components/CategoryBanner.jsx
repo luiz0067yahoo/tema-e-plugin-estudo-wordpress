@@ -1,5 +1,6 @@
 import { initGutenbergBlocks } from '../utils/gutenbergBlocks';
 import React, { useEffect, useRef } from 'react';
+import EditPostButton from './EditPostButton';
 
 export default function CategoryBanner({ page, categoryName }) {
   const contentRef = useRef(null);
@@ -19,6 +20,8 @@ export default function CategoryBanner({ page, categoryName }) {
 
   const title = page.name || page.title || page.post_title || categoryName;
   const thumb = page.thumbnail || page.featured_image || null;
+  const pageId = page.id || page.ID;
+  const editUrl = page.edit_url;
   const content =
     page.description ||
     page.content ||
@@ -29,12 +32,25 @@ export default function CategoryBanner({ page, categoryName }) {
   return (
     <section className="category-banner-card">
       <div className="banner-top">
-        <h2 className="banner-title">{title}</h2>
+        <div className="banner-title-row">
+          <h2 className="banner-title">{title}</h2>
+          {pageId && (
+            <EditPostButton
+              postId={pageId}
+              editUrl={editUrl}
+              title={title}
+              className="is-inline"
+            />
+          )}
+        </div>
       </div>
 
       {thumb && (
         <div className="banner-thumb-wrap">
           <img src={thumb} alt={title} className="banner-thumb" />
+          {pageId && (
+            <EditPostButton postId={pageId} editUrl={editUrl} title={title} />
+          )}
         </div>
       )}
 
