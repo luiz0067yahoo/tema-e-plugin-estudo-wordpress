@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: API Calculadora - WordPress REST API
+  description: Documentação Swagger / OpenAPI da API da Calculadora desenvolvida para WordPress.
+  version: 1.0.0
+servers:
+  - url: https://luizbrogliatto.freedev.app/wp-json
+    description: Servidor de Produção / Desenvolvimento
+
+tags:
+  - name: calculadora
+    description: Operações matemáticas da Calculadora API
+
+paths:
+  /api/v1/calculadora/soma/{v1}/{v2}:
+    get:
+      tags:
+        - calculadora
+      summary: Realiza a soma de dois números
+      description: Retorna a soma entre v1 e v2.
+      operationId: somarValores
+      parameters:
+        - name: v1
+          in: path
+          required: true
+          description: Primeiro valor para a soma
+          schema:
+            type: integer
+          example: 70
+        - name: v2
+          in: path
+          required: true
+          description: Segundo valor para a soma
+          schema:
+            type: integer
+          example: 7
+      responses:
+        '200':
+          description: Operação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoCalculo'
+              example:
+                resultado: 77
+
+  /api/v1/calculadora/subtracao/{v1}/{v2}:
+    post:
+      tags:
+        - calculadora
+      summary: Realiza a subtração de dois números
+      description: Retorna a subtração de v1 por v2.
+      operationId: subtrairValores
+      parameters:
+        - name: v1
+          in: path
+          required: true
+          description: Primeiro valor (minuendo)
+          schema:
+            type: integer
+          example: 70
+        - name: v2
+          in: path
+          required: true
+          description: Segundo valor (subtraendo)
+          schema:
+            type: integer
+          example: 7
+      responses:
+        '200':
+          description: Operação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoCalculo'
+              example:
+                resultado: 63
+
+  /api/v1/calculadora/multiplicacao/{v1}/{v2}:
+    put:
+      tags:
+        - calculadora
+      summary: Realiza a multiplicação de dois números
+      description: Retorna a multiplicação de v1 por v2 (WP_REST_Server::EDITABLE aceita PUT/POST/PATCH).
+      operationId: multiplicarValores
+      parameters:
+        - name: v1
+          in: path
+          required: true
+          description: Primeiro fator
+          schema:
+            type: integer
+          example: 70
+        - name: v2
+          in: path
+          required: true
+          description: Segundo fator
+          schema:
+            type: integer
+          example: 7
+      responses:
+        '200':
+          description: Operação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoCalculo'
+              example:
+                resultado: 490
+
+  /api/v1/calculadora/divisao/{v1}/{v2}:
+    delete:
+      tags:
+        - calculadora
+      summary: Realiza a divisão de dois números
+      description: Retorna o quociente da divisão de v1 por v2.
+      operationId: dividirValores
+      parameters:
+        - name: v1
+          in: path
+          required: true
+          description: Dividendo
+          schema:
+            type: integer
+          example: 70
+        - name: v2
+          in: path
+          required: true
+          description: Divisor (diferente de zero)
+          schema:
+            type: integer
+          example: 7
+      responses:
+        '200':
+          description: Operação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultadoCalculo'
+              example:
+                resultado: 10
+
+components:
+  schemas:
+    ResultadoCalculo:
+      type: object
+      properties:
+        resultado:
+          type: number
+          description: Resultado da operação matemática realizada
+          example: 77

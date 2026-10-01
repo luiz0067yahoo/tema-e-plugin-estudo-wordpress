@@ -5,7 +5,8 @@
 
 ## 🚀 Demo
 
-**[👉 Acessar demonstração online](https://luizbrogliatto.freedev.app/home/)**
+- **[👉 Acessar demonstração online](https://luizbrogliatto.freedev.app/home/)**
+- **[📖 Documentação Swagger Online (Calculadora API)](https://luizbrogliatto.freedev.app/wp-content/plugins/plugin_estudo/swagger.html)**
 
 # Tema e Plugin Estudo WordPress - API REST e Arquitetura MVC
 
@@ -21,6 +22,7 @@ Este repositório contém a documentação e a implementação de um ambiente de
    - [Arquivos Raiz do Plugin](#21-arquivos-raiz-do-plugin)
    - [Arquitetura Interna (`includes/`)](#22-diretório-includes-arquitetura-interna)
    - [Endpoints da API REST (`api/v1`)](#23-endpoints-da-api-rest-apiv1)
+   - [Documentação Swagger / OpenAPI](#24-documentação-swagger--openapi)
 4. [Tema Customizado: `tema_estudo`](#3-tema-customizado-tema_estudo)
    - [Arquivos Core e Templates PHP/HTML](#31-arquivos-core-e-templates-phphtml)
    - [Módulo de Scripts JavaScript (`assets/js/`)](#32-módulo-de-scripts-javascript-assetsjs)
@@ -66,6 +68,9 @@ Localizado em `wp-content/plugins/plugin_estudo`, este plugin implementa uma arq
 | `autoload2.php` | **Autoloader** | Gerencia o carregamento automático de classes PHP do plugin de forma modular. |
 | `composer.json` / `composer.lock` | **Dependências** | Gerenciador de pacotes Composer para controle de bibliotecas e dependências externas (ex: Firebase JWT). |
 | `env.php` / `.env.example.php` | **Ambiente** | Gerenciamento de variáveis de ambiente e chaves de configuração sensíveis. |
+| `swagger.yaml` | **Documentação API** | Especificação OpenAPI 3.0 / Swagger das rotas da API em formato YAML. |
+| `swagger.json` | **Documentação API** | Especificação OpenAPI 3.0 / Swagger das rotas da API em formato JSON. |
+| `swagger.html` | **Interface Swagger UI** | Página HTML interativa pronta para execução do Swagger UI com teste direto dos endpoints. |
 
 ### 2.2. Diretório `includes/` (Arquitetura Interna)
 
@@ -74,7 +79,7 @@ A pasta `includes/` organiza o código do plugin segundo o padrão de arquitetur
 | Subpasta / Arquivo | Tipo | Função e Descrição |
 | :--- | :--- | :--- |
 | `controllers/` | **Controller** | Controladores de rotas e lógica de requisições, incluindo a inicialização de rotas em `_register_rest_route.php`. |
-| `controllers/wordpress_api/` | **API Endpoints** | Controladores específicos para endpoints REST: `categories_controller.php`, `products_controller.php`, `posts_controller.php`, `pages_controller.php`, `settings_controller.php`, `login_api_controller.php`. |
+| `controllers/wordpress_api/` | **API Endpoints** | Controladores específicos para endpoints REST: `categories_controller.php`, `products_controller.php`, `posts_controller.php`, `pages_controller.php`, `settings_controller.php`, `login_api_controller.php`, `calculadora_controller.php`. |
 | `db/` | **Banco de Dados** | Gerencia migrações (`_migrate.php`) e operações de tabelas de banco de dados personalizadas (ex: `user_login_db.php`). |
 | `models/` | **Model** | Camada de abstração de dados e mapeamento: `wp_categories_model.php`, `wp_users_model.php`, `wp_posts_data_model.php`, `wp_pages_model.php`, `wp_products_model.php`, `_model_db.php`. |
 | `services/` | **Services** | Camada de regras de negócios intermediária entre os controllers e modelos (`categories_service.php`, `products_service.php`, `login_api_service.php`, `pages_service.php`, `posts_service.php`, `settings_service.php`). |
@@ -94,6 +99,19 @@ A pasta `includes/` organiza o código do plugin segundo o padrão de arquitetur
 | `/wp-json/api/v1/logout` | `POST` | `LoginApiController` | Encerra a sessão do usuário autenticado. |
 | `/wp-json/api/v1/new_token` | `POST` | `LoginApiController` | Gera/renova o token JWT de acesso. |
 | `/wp-json/api/v1/verify` | `POST` | `LoginApiController` | Valida a autenticidade e validade do token JWT. |
+| `/wp-json/api/v1/calculadora/soma/{v1}/{v2}` | `GET` | `Calculadora_Controller` | Realiza a soma de dois números (`v1 + v2`). |
+| `/wp-json/api/v1/calculadora/subtracao/{v1}/{v2}` | `POST` | `Calculadora_Controller` | Realiza a subtração de dois números (`v1 - v2`). |
+| `/wp-json/api/v1/calculadora/multiplicacao/{v1}/{v2}` | `PUT` | `Calculadora_Controller` | Realiza a multiplicação de dois números (`v1 * v2`). |
+| `/wp-json/api/v1/calculadora/divisao/{v1}/{v2}` | `DELETE` | `Calculadora_Controller` | Realiza a divisão de dois números (`v1 / v2`). |
+
+### 2.4. Documentação Swagger / OpenAPI
+
+A API conta com documentação interativa baseada no padrão OpenAPI 3.0 / Swagger UI, permitindo visualizar e testar as requisições em tempo real:
+
+- 🌐 **Acesso Online**: [https://luizbrogliatto.freedev.app/wp-content/plugins/plugin_estudo/swagger.html](https://luizbrogliatto.freedev.app/wp-content/plugins/plugin_estudo/swagger.html)
+- 📄 **Especificação YAML**: `wp-content/plugins/plugin_estudo/swagger.yaml`
+- 📄 **Especificação JSON**: `wp-content/plugins/plugin_estudo/swagger.json`
+- 🖥️ **Swagger Editor**: Pode ser aberto diretamente no [Swagger Editor](https://editor.swagger.io/) importando o arquivo `swagger.yaml`.
 
 ---
 

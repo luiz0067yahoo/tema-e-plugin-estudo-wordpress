@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI - Calculadora API</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5/favicon-16x16.png" sizes="16x16" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #fafafa;
+      font-family: sans-serif;
+    }
+    .topbar {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" charset="UTF-8"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+  <script>
+    window.onload = function() {
+      const spec = {
+        "openapi": "3.0.3",
+        "info": {
+          "title": "API Calculadora - WordPress REST API",
+          "description": "Documentação Swagger / OpenAPI da API da Calculadora desenvolvida para WordPress.",
+          "version": "1.0.0"
+        },
+        "servers": [
+          {
+            "url": "https://luizbrogliatto.freedev.app/wp-json",
+            "description": "Servidor da Aplicação"
+          }
+        ],
+        "tags": [
+          {
+            "name": "calculadora",
+            "description": "Operações matemáticas da Calculadora API"
+          }
+        ],
+        "paths": {
+          "/api/v1/calculadora/soma/{v1}/{v2}": {
+            "get": {
+              "tags": ["calculadora"],
+              "summary": "Realiza a soma de dois números",
+              "description": "Retorna a soma entre v1 e v2.",
+              "operationId": "somarValores",
+              "parameters": [
+                { "name": "v1", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 70 },
+                { "name": "v2", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 7 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Operação realizada com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/ResultadoCalculo" },
+                      "example": { "resultado": 77 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/calculadora/subtracao/{v1}/{v2}": {
+            "post": {
+              "tags": ["calculadora"],
+              "summary": "Realiza a subtração de dois números",
+              "description": "Retorna a subtração de v1 por v2.",
+              "operationId": "subtrairValores",
+              "parameters": [
+                { "name": "v1", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 70 },
+                { "name": "v2", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 7 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Operação realizada com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/ResultadoCalculo" },
+                      "example": { "resultado": 63 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/calculadora/multiplicacao/{v1}/{v2}": {
+            "put": {
+              "tags": ["calculadora"],
+              "summary": "Realiza a multiplicação de dois números",
+              "description": "Retorna a multiplicação de v1 por v2.",
+              "operationId": "multiplicarValores",
+              "parameters": [
+                { "name": "v1", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 70 },
+                { "name": "v2", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 7 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Operação realizada com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/ResultadoCalculo" },
+                      "example": { "resultado": 490 }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/calculadora/divisao/{v1}/{v2}": {
+            "delete": {
+              "tags": ["calculadora"],
+              "summary": "Realiza a divisão de dois números",
+              "description": "Retorna o quociente da divisão de v1 por v2.",
+              "operationId": "dividirValores",
+              "parameters": [
+                { "name": "v1", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 70 },
+                { "name": "v2", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 7 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Operação realizada com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/ResultadoCalculo" },
+                      "example": { "resultado": 10 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "ResultadoCalculo": {
+              "type": "object",
+              "properties": {
+                "resultado": {
+                  "type": "number",
+                  "description": "Resultado da operação matemática realizada",
+                  "example": 77
+                }
+              }
+            }
+          }
+        }
+      };
+
+      const ui = SwaggerUIBundle({
+        spec: spec,
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        defaultModelsExpandDepth: 1,
+        docExpansion: "list"
+      });
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>
