@@ -60,7 +60,8 @@
           { "name": "Posts", "description": "Consulta de artigos e publicações do blog." },
           { "name": "Páginas", "description": "Consulta de páginas institucionais do WordPress." },
           { "name": "Calculadora", "description": "Operações matemáticas demonstrativas da API." },
-          { "name": "Marcas", "description": "CRUD completo de Marcas (tabela wpo2_marca - campos id e nome)." }
+          { "name": "Marcas", "description": "CRUD completo de Marcas (campos id e nome)." },
+          { "name": "Modelos", "description": "CRUD completo de Modelos (campos id, id_marca e nome)." }
         ],
         "paths": {
           "/api/v1/login": {
@@ -653,11 +654,83 @@
               }
             }
           },
+          "/api/v1/calculadora/fibonacci/{n}": {
+            "get": {
+              "tags": ["Calculadora"],
+              "summary": "Calcular Fibonacci via PATH",
+              "description": "Retorna o n-ésimo número de Fibonacci e a sequência até a posição informada via path.",
+              "operationId": "calcularFibonacci",
+              "parameters": [
+                { "name": "n", "in": "path", "required": true, "description": "Posição na sequência de Fibonacci", "schema": { "type": "integer" }, "example": 7 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Sequência e número calculados com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "posicao": { "type": "integer", "example": 7 },
+                          "resultado": { "type": "integer", "example": 13 },
+                          "sequencia": {
+                            "type": "array",
+                            "items": { "type": "integer" },
+                            "example": [0, 1, 1, 2, 3, 5, 8, 13]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/calculadora/potencia": {
+            "post": {
+              "tags": ["Calculadora"],
+              "summary": "Calcular Potência via BODY RAW POST",
+              "description": "Calcula a potência de v1 (base) elevado a v2 (expoente) enviado via JSON no corpo da requisição.",
+              "operationId": "calcularPotencia",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "required": ["v1", "v2"],
+                      "properties": {
+                        "v1": { "type": "number", "description": "Base da potência", "example": 2 },
+                        "v2": { "type": "number", "description": "Expoente da potência", "example": 8 }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Cálculo de potência realizado com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "base": { "type": "number", "example": 2 },
+                          "expoente": { "type": "number", "example": 8 },
+                          "resultado": { "type": "number", "example": 256 }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "/api/v1/marca": {
             "get": {
               "tags": ["Marcas"],
               "summary": "Listar marcas cadastradas",
-              "description": "Retorna a lista paginada de marcas cadastradas na tabela wpo2_marca.",
+              "description": "Retorna a lista paginada de marcas cadastradas.",
               "operationId": "listarMarcas",
               "parameters": [
                 { "name": "page", "in": "query", "description": "Número da página", "schema": { "type": "integer", "default": 1 }, "example": 1 },
@@ -828,6 +901,183 @@
                 }
               }
             }
+          },
+          "/api/v1/modelo": {
+            "get": {
+              "tags": ["Modelos"],
+              "summary": "Listar modelos cadastrados",
+              "description": "Retorna a lista paginada de modelos cadastrados, com opção de filtro por id_marca.",
+              "operationId": "listarModelos",
+              "parameters": [
+                { "name": "page", "in": "query", "description": "Número da página", "schema": { "type": "integer", "default": 1 }, "example": 1 },
+                { "name": "per_page", "in": "query", "description": "Modelos por página", "schema": { "type": "integer", "default": 10 }, "example": 10 },
+                { "name": "all", "in": "query", "description": "Retornar todos sem paginação", "schema": { "type": "boolean" }, "example": false },
+                { "name": "id_marca", "in": "query", "description": "Filtrar por ID da marca", "schema": { "type": "integer" }, "example": 1 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Lista de modelos obtida com sucesso",
+                  "headers": {
+                    "x-wp-total": { "description": "Total geral de modelos", "schema": { "type": "integer" } },
+                    "x-wp-totalpages": { "description": "Total de páginas de modelos", "schema": { "type": "integer" } }
+                  },
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/Modelo" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "post": {
+              "tags": ["Modelos"],
+              "summary": "Criar novo modelo",
+              "description": "Cadastra um novo modelo associado a uma marca existente.",
+              "operationId": "criarModelo",
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/ModeloEntrada" }
+                  }
+                }
+              },
+              "responses": {
+                "201": {
+                  "description": "Modelo criado com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/Modelo" }
+                    }
+                  }
+                },
+                "400": {
+                  "description": "Erro na requisição (campos obrigatórios inválidos)",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/modelo/{id}": {
+            "get": {
+              "tags": ["Modelos"],
+              "summary": "Obter modelo por ID",
+              "description": "Retorna os dados completos de um modelo específico por ID.",
+              "operationId": "obterModeloPorId",
+              "parameters": [
+                { "name": "id", "in": "path", "required": true, "description": "ID do modelo", "schema": { "type": "integer" }, "example": 1 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Dados do modelo retornados com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/Modelo" }
+                    }
+                  }
+                },
+                "404": {
+                  "description": "Modelo não encontrado",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" },
+                      "example": { "message": "Modelo não encontrado" }
+                    }
+                  }
+                }
+              }
+            },
+            "put": {
+              "tags": ["Modelos"],
+              "summary": "Atualizar modelo existente",
+              "description": "Atualiza os dados de um modelo existente pelo ID.",
+              "operationId": "atualizarModelo",
+              "parameters": [
+                { "name": "id", "in": "path", "required": true, "description": "ID do modelo a atualizar", "schema": { "type": "integer" }, "example": 1 }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "$ref": "#/components/schemas/ModeloEntrada" }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Modelo atualizado com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/Modelo" }
+                    }
+                  }
+                },
+                "400": {
+                  "description": "Falha ao atualizar modelo",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" }
+                    }
+                  }
+                },
+                "404": {
+                  "description": "Modelo não encontrado",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" }
+                    }
+                  }
+                }
+              }
+            },
+            "delete": {
+              "tags": ["Modelos"],
+              "summary": "Excluir modelo por ID",
+              "description": "Remove o modelo do banco de dados pelo ID.",
+              "operationId": "excluirModelo",
+              "parameters": [
+                { "name": "id", "in": "path", "required": true, "description": "ID do modelo a excluir", "schema": { "type": "integer" }, "example": 1 }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Modelo excluído com sucesso",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "message": { "type": "string", "example": "Modelo excluído com sucesso" },
+                          "id": { "type": "integer", "example": 1 }
+                        }
+                      }
+                    }
+                  }
+                },
+                "400": {
+                  "description": "Falha ao excluir modelo",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" }
+                    }
+                  }
+                },
+                "404": {
+                  "description": "Modelo não encontrado",
+                  "content": {
+                    "application/json": {
+                      "schema": { "$ref": "#/components/schemas/MensagemResposta" }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "components": {
@@ -904,7 +1154,7 @@
             },
             "Marca": {
               "type": "object",
-              "description": "Registro da tabela wpo2_marca",
+              "description": "Registro de Marca",
               "properties": {
                 "id": {
                   "type": "integer",
@@ -927,6 +1177,44 @@
                   "type": "string",
                   "description": "Nome da marca",
                   "example": "Nike"
+                }
+              }
+            },
+            "Modelo": {
+              "type": "object",
+              "description": "Registro de Modelo",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "ID único do modelo",
+                  "example": 1
+                },
+                "id_marca": {
+                  "type": "integer",
+                  "description": "ID da marca relacionada",
+                  "example": 1
+                },
+                "nome": {
+                  "type": "string",
+                  "description": "Nome do modelo",
+                  "example": "Corolla"
+                }
+              }
+            },
+            "ModeloEntrada": {
+              "type": "object",
+              "description": "Payload de entrada para criação ou atualização de modelo",
+              "required": ["id_marca", "nome"],
+              "properties": {
+                "id_marca": {
+                  "type": "integer",
+                  "description": "ID da marca relacionada",
+                  "example": 1
+                },
+                "nome": {
+                  "type": "string",
+                  "description": "Nome do modelo",
+                  "example": "Corolla"
                 }
               }
             }

@@ -7,4 +7,5 @@
     require_once(plugin_dir_path(__FILE__) . '/wordpress_api/pages_controller.php');
     require_once(plugin_dir_path(__FILE__) . '/wordpress_api/calculadora_controller.php');
     require_once(plugin_dir_path(__FILE__) . '/wordpress_api/marca_controller.php');
+    require_once(plugin_dir_path(__FILE__) . '/wordpress_api/modelo_controller.php');
 ?>
