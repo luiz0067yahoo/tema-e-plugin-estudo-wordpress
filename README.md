@@ -79,10 +79,10 @@ A pasta `includes/` organiza o código do plugin segundo o padrão de arquitetur
 | Subpasta / Arquivo | Tipo | Função e Descrição |
 | :--- | :--- | :--- |
 | `controllers/` | **Controller** | Controladores de rotas e lógica de requisições, incluindo a inicialização de rotas em `_register_rest_route.php`. |
-| `controllers/wordpress_api/` | **API Endpoints** | Controladores específicos para endpoints REST: `categories_controller.php`, `products_controller.php`, `posts_controller.php`, `pages_controller.php`, `settings_controller.php`, `login_api_controller.php`, `calculadora_controller.php`. |
+| `controllers/wordpress_api/` | **API Endpoints** | Controladores específicos para endpoints REST: `categories_controller.php`, `products_controller.php`, `posts_controller.php`, `pages_controller.php`, `settings_controller.php`, `login_api_controller.php`, `calculadora_controller.php`, `marca_controller.php`. |
 | `db/` | **Banco de Dados** | Gerencia migrações (`_migrate.php`) e operações de tabelas de banco de dados personalizadas (ex: `user_login_db.php`). |
-| `models/` | **Model** | Camada de abstração de dados e mapeamento: `wp_categories_model.php`, `wp_users_model.php`, `wp_posts_data_model.php`, `wp_pages_model.php`, `wp_products_model.php`, `_model_db.php`. |
-| `services/` | **Services** | Camada de regras de negócios intermediária entre os controllers e modelos (`categories_service.php`, `products_service.php`, `login_api_service.php`, `pages_service.php`, `posts_service.php`, `settings_service.php`). |
+| `models/` | **Model** | Camada de abstração de dados e mapeamento: `wp_categories_model.php`, `wp_users_model.php`, `wp_posts_data_model.php`, `wp_pages_model.php`, `wp_products_model.php`, `marca_model.php`, `_model_db.php`. |
+| `services/` | **Services** | Camada de regras de negócios intermediária entre os controllers e modelos (`categories_service.php`, `products_service.php`, `login_api_service.php`, `pages_service.php`, `posts_service.php`, `settings_service.php`, `marca_service.php`). |
 
 ### 2.3. Endpoints da API REST (`api/v1`)
 
@@ -99,10 +99,18 @@ A pasta `includes/` organiza o código do plugin segundo o padrão de arquitetur
 | `/wp-json/api/v1/logout` | `POST` | `LoginApiController` | Encerra a sessão do usuário autenticado. |
 | `/wp-json/api/v1/new_token` | `POST` | `LoginApiController` | Gera/renova o token JWT de acesso. |
 | `/wp-json/api/v1/verify` | `POST` | `LoginApiController` | Valida a autenticidade e validade do token JWT. |
+| `/wp-json/api/v1/forgot` | `POST` | `LoginApiController` | Solicita link/código de recuperação de senha por e-mail. |
+| `/wp-json/api/v1/code` | `POST` | `LoginApiController` | Valida o código/chave de redefinição de senha. |
+| `/wp-json/api/v1/newPassword` | `POST` | `LoginApiController` | Define uma nova senha para o usuário com a chave validada. |
 | `/wp-json/api/v1/calculadora/soma/{v1}/{v2}` | `GET` | `Calculadora_Controller` | Realiza a soma de dois números (`v1 + v2`). |
 | `/wp-json/api/v1/calculadora/subtracao/{v1}/{v2}` | `POST` | `Calculadora_Controller` | Realiza a subtração de dois números (`v1 - v2`). |
 | `/wp-json/api/v1/calculadora/multiplicacao/{v1}/{v2}` | `PUT` | `Calculadora_Controller` | Realiza a multiplicação de dois números (`v1 * v2`). |
 | `/wp-json/api/v1/calculadora/divisao/{v1}/{v2}` | `DELETE` | `Calculadora_Controller` | Realiza a divisão de dois números (`v1 / v2`). |
+| `/wp-json/api/v1/marca` | `GET` | `MarcaController` | Retorna a listagem paginada de marcas (tabela `wpo2_marca`). |
+| `/wp-json/api/v1/marca` | `POST` | `MarcaController` | Cadastra uma nova marca (campos: `id`, `nome`). |
+| `/wp-json/api/v1/marca/{id}` | `GET` | `MarcaController` | Retorna os detalhes de uma marca específica por ID. |
+| `/wp-json/api/v1/marca/{id}` | `PUT` | `MarcaController` | Atualiza uma marca existente por ID (`nome`). |
+| `/wp-json/api/v1/marca/{id}` | `DELETE` | `MarcaController` | Exclui uma marca por ID do banco de dados. |
 
 ### 2.4. Documentação Swagger / OpenAPI
 

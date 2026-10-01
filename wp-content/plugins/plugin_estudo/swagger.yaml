@@ -1,42 +1,625 @@
 openapi: 3.0.3
 info:
-  title: API Calculadora - WordPress REST API
-  description: Documentação Swagger / OpenAPI da API da Calculadora desenvolvida para WordPress.
+  title: WordPress REST API - Plugin Estudo
+  description: >-
+    Documentação completa OpenAPI 3.0 / Swagger de todos os controladores da
+    WordPress REST API (`api/v1`) do plugin `plugin_estudo`. Inclui autenticação
+    JWT, configurações, categorias, produtos, posts, páginas e calculadora.
   version: 1.0.0
 servers:
   - url: https://luizbrogliatto.freedev.app/wp-json
-    description: Servidor de Produção / Desenvolvimento
+    description: Servidor de Desenvolvimento / Produção
 
 tags:
-  - name: calculadora
-    description: Operações matemáticas da Calculadora API
+  - name: Autenticação
+    description: Endpoints para login, renovação de token JWT, validação e recuperação de senha.
+  - name: Configurações
+    description: Configurações gerais do site, logos e metadados.
+  - name: Categorias
+    description: Consulta e gerenciamento de categorias da API.
+  - name: Produtos
+    description: Catálogo e detalhes de produtos.
+  - name: Posts
+    description: Consulta de artigos e publicações do blog.
+  - name: Páginas
+    description: Consulta de páginas institucionais do WordPress.
+  - name: Calculadora
+    description: Operações matemáticas demonstrativas da API.
+  - name: Marcas
+    description: CRUD completo de Marcas (tabela wpo2_marca - campos id e nome).
 
 paths:
+  # ==========================================
+  # AUTENTICAÇÃO (LoginApiController)
+  # ==========================================
+  /api/v1/login:
+    post:
+      tags:
+        - Autenticação
+      summary: Realizar login e obter Token JWT
+      description: Autentica o usuário no WordPress e retorna um Token JWT assinado com HS512.
+      operationId: loginUsuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                  example: "123456"
+      responses:
+        '200':
+          description: Autenticação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                    example: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...
+        '400':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: username or password inválid
+
+  /api/v1/logout:
+    post:
+      tags:
+        - Autenticação
+      summary: Encerrar sessão (Logout)
+      description: Finaliza a sessão associada ao token JWT enviado no cabeçalho Authorization.
+      operationId: logoutUsuario
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: Logout successful!
+        '400':
+          description: Falha ao realizar logout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+
+  /api/v1/new_token:
+    post:
+      tags:
+        - Autenticação
+      summary: Renovar Token JWT
+      description: Gera um novo token JWT a partir do token atualmente válido enviado no cabeçalho.
+      operationId: renovarToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Novo token gerado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jwt:
+                    type: string
+                    example: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9...
+
+  /api/v1/verify:
+    post:
+      tags:
+        - Autenticação
+      summary: Validar validade e expiração do Token JWT
+      description: Verifica se o token JWT presente no cabeçalho Authorization ainda é válido e ativo.
+      operationId: verificarToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Status de validação do token
+          content:
+            application/json:
+              schema:
+                type: boolean
+                example: true
+
+  /api/v1/forgot:
+    post:
+      tags:
+        - Autenticação
+      summary: Solicitar redefinição de senha por e-mail
+      description: Envia um e-mail com link e token para redefinição de senha do usuário.
+      operationId: esqueciSenha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: usuario@exemplo.com
+      responses:
+        '200':
+          description: E-mail de redefinição enviado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: success send e-mail
+        '400':
+          description: E-mail inválido ou usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: verify your e-mail
+
+  /api/v1/code:
+    post:
+      tags:
+        - Autenticação
+      summary: Validar código de recuperação de senha
+      description: Verifica se a chave recebida no e-mail para redefinição de senha ainda é válida.
+      operationId: validarCodigoRecuperacao
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - login
+              properties:
+                login:
+                  type: string
+                  example: admin
+                code:
+                  type: string
+                  example: a1b2c3d4e5
+      responses:
+        '200':
+          description: Código válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: code valid
+        '400':
+          description: Código expirado ou inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: code inválid or exprired
+
+  /api/v1/newPassword:
+    post:
+      tags:
+        - Autenticação
+      summary: Definir nova senha
+      description: Altera a senha do usuário utilizando a chave de redefinição previamente validada.
+      operationId: redefinirNovaSenha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+                - code
+                - new_password
+              properties:
+                login:
+                  type: string
+                  example: admin
+                code:
+                  type: string
+                  example: a1b2c3d4e5
+                new_password:
+                  type: string
+                  format: password
+                  example: "novaSenhaSegura#123"
+      responses:
+        '200':
+          description: Senha alterada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: Password reset successful
+        '400':
+          description: Erro na redefinição da senha
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+
+  # ==========================================
+  # CONFIGURAÇÕES (SettingsController)
+  # ==========================================
+  /api/v1/settings:
+    get:
+      tags:
+        - Configurações
+      summary: Obter configurações gerais do site
+      description: Retorna metadados como título, descrição, URL da logo e URL principal do WordPress.
+      operationId: obterConfiguracoes
+      responses:
+        '200':
+          description: Configurações do site obtidas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteSettings'
+              example:
+                title: Meu Site WordPress
+                description: Apenas mais um site WordPress
+                logo: https://luizbrogliatto.freedev.app/wp-content/uploads/logo.png
+                home_url: https://luizbrogliatto.freedev.app/
+
+  # ==========================================
+  # CATEGORIAS (CategoriesController)
+  # ==========================================
+  /api/v1/categories:
+    get:
+      tags:
+        - Categorias
+      summary: Listar categorias cadastradas
+      description: Retorna a lista paginada de categorias do WordPress.
+      operationId: listarCategorias
+      parameters:
+        - name: page
+          in: query
+          description: Número da página atual
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Quantidade de itens por página
+          schema:
+            type: integer
+            default: 100
+          example: 20
+        - name: all
+          in: query
+          description: Se informado, retorna todas as categorias sem limitação
+          schema:
+            type: boolean
+          example: false
+      responses:
+        '200':
+          description: Lista de categorias obtida com sucesso
+          headers:
+            x-wp-total:
+              description: Total geral de categorias encontradas
+              schema:
+                type: integer
+            x-wp-totalpages:
+              description: Total de páginas disponíveis
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Categoria'
+
+  /api/v1/categories/{id}:
+    get:
+      tags:
+        - Categorias
+      summary: Obter categoria por ID
+      description: Retorna os dados completos de uma categoria específica.
+      operationId: obterCategoriaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID único da categoria
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Dados da categoria retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Categoria'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: not found
+
+  # ==========================================
+  # PRODUTOS (ProductsController)
+  # ==========================================
+  /api/v1/products:
+    get:
+      tags:
+        - Produtos
+      summary: Listar produtos da loja
+      description: Retorna a lista paginada de produtos cadastrados.
+      operationId: listarProdutos
+      parameters:
+        - name: page
+          in: query
+          description: Número da página atual
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Quantidade de produtos por página
+          schema:
+            type: integer
+            default: 12
+          example: 12
+      responses:
+        '200':
+          description: Lista de produtos retornada com sucesso
+          headers:
+            x-wp-total:
+              description: Total geral de produtos cadastrados
+              schema:
+                type: integer
+            x-wp-totalpages:
+              description: Total de páginas de produtos
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Produto'
+
+  /api/v1/products/{id}:
+    get:
+      tags:
+        - Produtos
+      summary: Obter produto por ID
+      description: Retorna as informações detalhadas de um produto específico.
+      operationId: obterProdutoPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID numérico do produto
+          schema:
+            type: integer
+          example: 10
+      responses:
+        '200':
+          description: Dados do produto obtidos com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '404':
+          description: Produto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: not found
+
+  # ==========================================
+  # POSTS (PostsController)
+  # ==========================================
+  /api/v1/posts:
+    get:
+      tags:
+        - Posts
+      summary: Listar publicações do blog
+      description: Retorna a lista paginada de posts do WordPress.
+      operationId: listarPosts
+      parameters:
+        - name: page
+          in: query
+          description: Número da página
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Posts por página
+          schema:
+            type: integer
+            default: 12
+          example: 10
+      responses:
+        '200':
+          description: Lista de posts obtida com sucesso
+          headers:
+            x-wp-total:
+              description: Total de posts encontrados
+              schema:
+                type: integer
+            x-wp-totalpages:
+              description: Quantidade total de páginas
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+
+  /api/v1/posts/{id}:
+    get:
+      tags:
+        - Posts
+      summary: Obter post por ID
+      description: Retorna o conteúdo e metadados de uma publicação específica.
+      operationId: obterPostPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da publicação
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Dados do post encontrados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: not found
+
+  # ==========================================
+  # PÁGINAS (PagesController)
+  # ==========================================
+  /api/v1/pages:
+    get:
+      tags:
+        - Páginas
+      summary: Listar páginas do site
+      description: Retorna a lista paginada de páginas cadastradas no WordPress.
+      operationId: listarPaginas
+      parameters:
+        - name: page
+          in: query
+          description: Número da página
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Páginas por resultado
+          schema:
+            type: integer
+            default: 12
+          example: 10
+      responses:
+        '200':
+          description: Lista de páginas obtida com sucesso
+          headers:
+            x-wp-total:
+              description: Total de páginas encontradas
+              schema:
+                type: integer
+            x-wp-totalpages:
+              description: Total de páginas
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pagina'
+
+  /api/v1/pages/{id}:
+    get:
+      tags:
+        - Páginas
+      summary: Obter página por ID
+      description: Retorna os dados completos e conteúdo de uma página específica.
+      operationId: obterPaginaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da página
+          schema:
+            type: integer
+          example: 2
+      responses:
+        '200':
+          description: Dados da página encontrados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pagina'
+        '404':
+          description: Página não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: not found
+
+  # ==========================================
+  # CALCULADORA (Calculadora_Controller)
+  # ==========================================
   /api/v1/calculadora/soma/{v1}/{v2}:
     get:
       tags:
-        - calculadora
-      summary: Realiza a soma de dois números
+        - Calculadora
+      summary: Realizar soma de dois números
       description: Retorna a soma entre v1 e v2.
       operationId: somarValores
       parameters:
         - name: v1
           in: path
           required: true
-          description: Primeiro valor para a soma
+          description: Primeiro número
           schema:
             type: integer
           example: 70
         - name: v2
           in: path
           required: true
-          description: Segundo valor para a soma
+          description: Segundo número
           schema:
             type: integer
           example: 7
       responses:
         '200':
-          description: Operação realizada com sucesso
+          description: Operação de soma concluída
           content:
             application/json:
               schema:
@@ -47,28 +630,28 @@ paths:
   /api/v1/calculadora/subtracao/{v1}/{v2}:
     post:
       tags:
-        - calculadora
-      summary: Realiza a subtração de dois números
-      description: Retorna a subtração de v1 por v2.
+        - Calculadora
+      summary: Realizar subtração de dois números
+      description: Retorna o resultado da subtração de v1 por v2.
       operationId: subtrairValores
       parameters:
         - name: v1
           in: path
           required: true
-          description: Primeiro valor (minuendo)
+          description: Minuendo
           schema:
             type: integer
           example: 70
         - name: v2
           in: path
           required: true
-          description: Segundo valor (subtraendo)
+          description: Subtraendo
           schema:
             type: integer
           example: 7
       responses:
         '200':
-          description: Operação realizada com sucesso
+          description: Operação de subtração concluída
           content:
             application/json:
               schema:
@@ -79,9 +662,9 @@ paths:
   /api/v1/calculadora/multiplicacao/{v1}/{v2}:
     put:
       tags:
-        - calculadora
-      summary: Realiza a multiplicação de dois números
-      description: Retorna a multiplicação de v1 por v2 (WP_REST_Server::EDITABLE aceita PUT/POST/PATCH).
+        - Calculadora
+      summary: Realizar multiplicação de dois números
+      description: Retorna a multiplicação entre v1 e v2 (método EDITABLE).
       operationId: multiplicarValores
       parameters:
         - name: v1
@@ -100,7 +683,7 @@ paths:
           example: 7
       responses:
         '200':
-          description: Operação realizada com sucesso
+          description: Operação de multiplicação concluída
           content:
             application/json:
               schema:
@@ -111,9 +694,9 @@ paths:
   /api/v1/calculadora/divisao/{v1}/{v2}:
     delete:
       tags:
-        - calculadora
-      summary: Realiza a divisão de dois números
-      description: Retorna o quociente da divisão de v1 por v2.
+        - Calculadora
+      summary: Realizar divisão de dois números
+      description: Retorna o quociente da divisão de v1 por v2 (método DELETABLE).
       operationId: dividirValores
       parameters:
         - name: v1
@@ -126,13 +709,13 @@ paths:
         - name: v2
           in: path
           required: true
-          description: Divisor (diferente de zero)
+          description: Divisor (não zero)
           schema:
             type: integer
           example: 7
       responses:
         '200':
-          description: Operação realizada com sucesso
+          description: Operação de divisão concluída
           content:
             application/json:
               schema:
@@ -140,12 +723,319 @@ paths:
               example:
                 resultado: 10
 
+  # ==========================================
+  # MARCAS (MarcaController - Tabela wpo2_marca)
+  # ==========================================
+  /api/v1/marca:
+    get:
+      tags:
+        - Marcas
+      summary: Listar marcas cadastradas
+      description: Retorna a lista paginada de marcas cadastradas na tabela wpo2_marca.
+      operationId: listarMarcas
+      parameters:
+        - name: page
+          in: query
+          description: Número da página atual
+          schema:
+            type: integer
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Quantidade de marcas por página
+          schema:
+            type: integer
+            default: 10
+          example: 10
+        - name: all
+          in: query
+          description: Retornar todas as marcas sem paginação
+          schema:
+            type: boolean
+          example: false
+      responses:
+        '200':
+          description: Lista de marcas obtida com sucesso
+          headers:
+            x-wp-total:
+              description: Total geral de marcas
+              schema:
+                type: integer
+            x-wp-totalpages:
+              description: Total de páginas de marcas
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Marca'
+    post:
+      tags:
+        - Marcas
+      summary: Criar nova marca
+      description: Cadastra uma nova marca (campos id e nome).
+      operationId: criarMarca
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarcaEntrada'
+      responses:
+        '201':
+          description: Marca criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Marca'
+        '400':
+          description: Erro na requisição (campo nome obrigatório)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+
+  /api/v1/marca/{id}:
+    get:
+      tags:
+        - Marcas
+      summary: Obter marca por ID
+      description: Retorna os dados completos de uma marca específica por ID.
+      operationId: obterMarcaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da marca
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Dados da marca retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Marca'
+        '404':
+          description: Marca não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+              example:
+                message: Marca não encontrada
+    put:
+      tags:
+        - Marcas
+      summary: Atualizar marca existente
+      description: Atualiza os dados de uma marca existente pelo ID.
+      operationId: atualizarMarca
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da marca a atualizar
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarcaEntrada'
+      responses:
+        '200':
+          description: Marca atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Marca'
+        '400':
+          description: Falha ao atualizar marca
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+        '404':
+          description: Marca não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+    delete:
+      tags:
+        - Marcas
+      summary: Excluir marca por ID
+      description: Remove a marca do banco de dados pelo ID.
+      operationId: excluirMarca
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID da marca a excluir
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Marca excluída com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Marca excluída com sucesso
+                  id:
+                    type: integer
+                    example: 1
+        '400':
+          description: Falha ao excluir marca
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+        '404':
+          description: Marca não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MensagemResposta'
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Insira o token JWT gerado pelo endpoint `/api/v1/login`.
+
   schemas:
+    MensagemResposta:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Operação executada com sucesso
+
+    SiteSettings:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Meu Site WordPress
+        description:
+          type: string
+          example: Descrição personalizada do site
+        logo:
+          type: string
+          example: https://exemplo.com/logo.png
+        home_url:
+          type: string
+          example: https://exemplo.com/
+
+    Categoria:
+      type: object
+      properties:
+        term_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Notícias
+        slug:
+          type: string
+          example: noticias
+        term_group:
+          type: integer
+          example: 0
+
+    Produto:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        title:
+          type: string
+          example: Produto Exemplo
+        price:
+          type: number
+          example: 99.90
+        description:
+          type: string
+          example: Descrição do produto em detalhes.
+        image:
+          type: string
+          example: https://exemplo.com/produto.jpg
+
+    Post:
+      type: object
+      properties:
+        ID:
+          type: integer
+          example: 1
+        post_title:
+          type: string
+          example: Olá, mundo!
+        post_content:
+          type: string
+          example: Bem-vindo ao WordPress. Este é o seu primeiro post.
+        post_date:
+          type: string
+          example: "2026-01-01 10:00:00"
+
+    Pagina:
+      type: object
+      properties:
+        ID:
+          type: integer
+          example: 2
+        post_title:
+          type: string
+          example: Sobre Nós
+        post_content:
+          type: string
+          example: Página institucional da empresa.
+        post_date:
+          type: string
+          example: "2026-01-01 12:00:00"
+
     ResultadoCalculo:
       type: object
       properties:
         resultado:
           type: number
-          description: Resultado da operação matemática realizada
+          description: Resultado numérico da operação matemática
           example: 77
+
+    Marca:
+      type: object
+      description: Registro da tabela wpo2_marca
+      properties:
+        id:
+          type: integer
+          description: ID único da marca (chave primária auto incremento)
+          example: 1
+        nome:
+          type: string
+          description: Nome da marca
+          example: "Nike"
+
+    MarcaEntrada:
+      type: object
+      description: Payload para criação ou edição de marca
+      required:
+        - nome
+      properties:
+        nome:
+          type: string
+          description: Nome da marca
+          example: "Nike"
+
